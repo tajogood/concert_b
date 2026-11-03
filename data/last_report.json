@@ -1,0 +1,15 @@
+{
+ "kopis": "ok events=1731 posts=0",
+ "seoul": "skipped: missing secrets: SEOUL_API_KEY",
+ "datagokr": "disabled",
+ "naver": "skipped: missing secrets: NAVER_CLIENT_ID, NAVER_CLIENT_SECRET",
+ "daum": "skipped: missing secrets: KAKAO_REST_KEY",
+ "x_api": "disabled",
+ "x_scrape": "disabled",
+ "instagram": "skipped: missing secrets: IG_ACCESS_TOKEN, IG_USER_ID",
+ "web_board": "disabled",
+ "extract": "posts=0 events=0",
+ "total": 1655,
+ "new": 1655,
+ "at": "2026-11-03T15:17:12+09:00"
+}
