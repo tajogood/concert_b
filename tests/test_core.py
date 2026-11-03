@@ -81,3 +81,12 @@ def test_plan_posts_slots():
     assert noon[0]["start"] == today_kst().isoformat()
     assert noon[0]["slides"][0]["kind"] == "cover" and noon[0]["slides"][-1]["kind"] == "outro"
     assert "seoul" in noon[0]["key"]
+
+
+def test_split_pages():
+    from concertbot import render
+    k = Event("콘서트", d(2), venue="롤링홀", region="서울", sources=[Source("kopis", "k")])
+    f = Event("사과축제", d(2), venue="청송", region="경북", genre="축제", sources=[Source("tour", "t")])
+    both = Event("국악 축제", d(3), venue="국악원", region="서울", sources=[Source("tour", "t2"), Source("kopis", "k2")])
+    c, fs = render.split_pages([k, f, both])
+    assert c == [k, both] and fs == [f]

@@ -47,41 +47,67 @@ def summarize(events: list[Event]):
 
 
 # ------------------------------------------------------------------ site
+FESTIVAL_SOURCES = {"tour"}
+
+
+def is_festival(e: Event) -> bool:
+    """지역 축제 페이지로 가는 행사: 관광공사 등 축제·행사 출처에서만 확인된 것."""
+    names = {s.name.split(":")[0] for s in e.sources}
+    return bool(names) and names <= FESTIVAL_SOURCES
+
+
+def split_pages(events: list[Event]):
+    return [e for e in events if not is_festival(e)], [e for e in events if is_festival(e)]
+
+
 def build_site(events: list[Event], cfg: dict, out_dir: str) -> str:
-    today, new, week = summarize(events)
     os.makedirs(out_dir, exist_ok=True)
     shutil.copytree(os.path.join(ROOT, "assets", "fonts"), os.path.join(out_dir, "fonts"), dirs_exist_ok=True)
     shutil.copytree(os.path.join(ROOT, "assets", "brand"), os.path.join(out_dir, "brand"), dirs_exist_ok=True)
+    concerts, festivals = split_pages(events)
+    _build_page(concerts, cfg, out_dir, "concerts", "index.html")
+    _build_page(festivals, cfg, out_dir, "festivals", "festivals.html")
+    return os.path.join(out_dir, "index.html")
+
+
+def _build_page(events: list[Event], cfg: dict, out_dir: str, page: str, filename: str):
+    today, new, week = summarize(events)
+    fest = page == "festivals"
+    if fest:  # 축제는 기간이 긴 게 보통이라 '상설·장기'로 빼지 않고 진행 중/시작 주차로 보여준다
+        week = [e for e in events if e.start_date <= (today_kst() + timedelta(days=6)).isoformat()
+                and (e.end_date or e.start_date) >= today]
     rows = []
     for e in sorted(events, key=lambda x: (max(x.start_date, today), x.region, x.title)):
         d = e.to_dict()
         d["is_new"] = _is_new(e, today)
-        d["long_run"] = is_long_run(e)
+        d["long_run"] = False if fest else is_long_run(e)
+        d["story"] = (e.story or "")[:300]
         d["sources"] = [{"label": SOURCE_LABELS.get(s.name.split(":")[0], s.name.split(":")[-1] or "출처"), "url": s.url}
                         for s in e.sources]
         rows.append({k: d[k] for k in ("title", "artists", "start_date", "end_date", "venue", "region", "city", "genre",
                                        "times", "price", "poster", "ticket_links", "ticket_open", "sources",
-                                       "confidence", "is_new", "long_run")})
+                                       "confidence", "is_new", "long_run", "story")})
     from collections import Counter
     cnt = Counter(e.region for e in events if e.region)
     regions = sorted(cnt, key=lambda r: (-cnt[r], REGION_ORDER.index(r) if r in REGION_ORDER else 99))
-    last_day = max(((e.end_date or e.start_date) for e in events if not is_long_run(e)), default=today)
     horizon = (today_kst() + timedelta(days=int(cfg.get("sources", {}).get("kopis", {}).get("days_ahead", 90)))).isoformat()
+    last_day = max(((e.end_date or e.start_date) for e in events if not is_long_run(e)), default=horizon)
     range_end = min(last_day, horizon)
+    genres = [g for g in (["축제", "버스킹"] + GENRES if fest else GENRES)]
     html = env.get_template("index.html.j2").render(
+        page=page, noun="축제·행사" if fest else "공연",
         brand=cfg["brand"], base_css=_base_css("fonts"), today_md=kdate(today, False), today_iso=today,
-        range_end_iso=range_end, genres=GENRES, range_end_label=f"{date.fromisoformat(range_end).year}년 {kdate(range_end)}",
-        counts={"new": len(new), "week": len(week), "total": len(events)}, regions=regions,
+        range_end_iso=range_end, genres=list(dict.fromkeys(genres)),
+        range_end_label=f"{date.fromisoformat(range_end).year}년 {kdate(range_end)}",
+        counts={"new": len(new), "week": len(week), "total": len(events),
+                "ongoing": sum(1 for e in events if e.start_date <= today <= (e.end_date or e.start_date))},
+        regions=regions,
         events_json=json.dumps(rows, ensure_ascii=False).replace("</", "<\\/"),
-        updated=now_kst().strftime("%Y-%m-%d %H:%M"), og_image=(cfg.get("site_url", "").rstrip("/") + "/brand/og.png") if cfg.get("site_url") else "",
+        og_image=(cfg.get("site_url", "").rstrip("/") + "/brand/og.png") if cfg.get("site_url") else "",
         company=cfg.get("company", ""), contact_email=cfg.get("contact_email", ""), data_credit=cfg.get("data_credit", ""),
     )
-    path = os.path.join(out_dir, "index.html")
-    with open(path, "w", encoding="utf-8") as f:
+    with open(os.path.join(out_dir, filename), "w", encoding="utf-8") as f:
         f.write(html)
-    with open(os.path.join(out_dir, "data.json"), "w", encoding="utf-8") as f:
-        json.dump(rows, f, ensure_ascii=False)
-    return path
 
 
 # ------------------------------------------------------------------ carousel
@@ -110,7 +136,8 @@ def plan_posts(events: list[Event], cfg: dict, slot: str) -> list[dict]:
     per_day = int(icfg.get("per_slide_week", 3))
     max_slides = min(int(icfg.get("max_slides", 10)), 20)
     genre_rank = {g: i for i, g in enumerate(icfg.get("genre_priority", GENRES))}
-    short = [e for e in events if not is_long_run(e) and e.confidence >= float(cfg.get("min_confidence_instagram", 0.7))]
+    short = [e for e in split_pages(events)[0]
+             if not is_long_run(e) and e.confidence >= float(cfg.get("min_confidence_instagram", 0.7))]
 
     def score(e):
         return (genre_rank.get(e.genre, 9), -bool(e.ticket_open), -bool(e.artists), -bool(e.ticket_links), e.title)

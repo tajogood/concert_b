@@ -11,6 +11,7 @@ KST = timezone(timedelta(hours=9))
 log = logging.getLogger("concertbot")
 
 REGIONS = {
+    "전남광주": ["전남광주통합특별시", "전남광주특별시", "전남광주"],   # 2026 통합. 광주·전남보다 먼저 검사
     "서울": ["서울특별시", "서울시", "서울"],
     "부산": ["부산광역시", "부산"],
     "대구": ["대구광역시", "대구"],
@@ -29,7 +30,8 @@ REGIONS = {
     "경남": ["경상남도", "경남"],
     "제주": ["제주특별자치도", "제주도", "제주"],
 }
-REGION_ORDER = list(REGIONS)
+REGION_ORDER = [r for r in REGIONS if r != "전남광주"]
+REGION_ORDER.insert(REGION_ORDER.index("광주"), "전남광주")
 
 # 시군구/공연장 → 시도 추정용 (자주 나오는 것만)
 CITY_HINTS = {
@@ -156,10 +158,10 @@ def kdate(iso: str, with_wd: bool = True) -> str:
 # ---------------------------------------------------------------- 주차
 REGION_SLUG = {"서울": "seoul", "부산": "busan", "대구": "daegu", "인천": "incheon", "광주": "gwangju", "대전": "daejeon",
                "울산": "ulsan", "세종": "sejong", "경기": "gyeonggi", "강원": "gangwon", "충북": "chungbuk", "충남": "chungnam",
-               "전북": "jeonbuk", "전남": "jeonnam", "경북": "gyeongbuk", "경남": "gyeongnam", "제주": "jeju"}
+               "전북": "jeonbuk", "전남": "jeonnam", "전남광주": "jeonnamgwangju", "경북": "gyeongbuk", "경남": "gyeongnam", "제주": "jeju"}
 ORDINALS = ["첫째", "둘째", "셋째", "넷째", "다섯째"]
 REGION_FULL = {"서울": "서울시", "부산": "부산시", "대구": "대구시", "인천": "인천시", "광주": "광주시", "대전": "대전시",
-               "울산": "울산시", "세종": "세종시", "경기": "경기도", "강원": "강원도", "충북": "충청북도", "충남": "충청남도",
+               "울산": "울산시", "세종": "세종시", "전남광주": "전남광주", "경기": "경기도", "강원": "강원도", "충북": "충청북도", "충남": "충청남도",
                "전북": "전북", "전남": "전라남도", "경북": "경상북도", "경남": "경상남도", "제주": "제주도"}
 
 
