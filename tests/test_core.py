@@ -51,3 +51,20 @@ def test_bootstrap_not_new():
     e = Event("첫 실행 공연", d(3), venue="롤링홀", sources=[Source("kopis", "k")])
     evs, _ = store.merge([], [e], bootstrap=True)
     assert evs[0].first_seen[:10] < today_kst().isoformat()
+
+
+def test_parse_city():
+    from concertbot.util import parse_city
+    assert parse_city("경기도 수원시 팔달구 효원로 307") == "수원시"
+    assert parse_city("서울특별시 송파구 올림픽로 424") == "송파구"
+    assert parse_city("부산광역시 해운대구 APEC로 55") == "해운대구"
+    assert parse_city("세종특별자치시 한누리대로 2130") == "세종시"
+    assert parse_city("경상북도 칠곡군 왜관읍") == "칠곡군"
+    assert parse_city("") == ""
+
+
+def test_guess_genre():
+    from concertbot.util import guess_genre
+    assert guess_genre("홍대 버스킹 데이") == "버스킹"
+    assert guess_genre("이은결 매직쇼") == "서커스·마술"
+    assert guess_genre("단독 콘서트") == ""

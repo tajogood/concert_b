@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#17144A">
-<title>{{ brand }} — 전국 음악 공연 일정</title>
-<meta name="description" content="전국 콘서트·페스티벌·클래식 공연 일정을 매일 정오에 업데이트합니다.">
+<title>{{ brand }} — 전국 공연 일정</title>
+<meta name="description" content="전국 콘서트·클래식·국악·마술·서커스·버스킹 공연 일정을 매일 정오에 업데이트합니다.">
 <meta property="og:title" content="{{ brand }}">
 <meta property="og:description" content="오늘 새로 뜬 공연 {{ counts.new }}개, 7일 안에 열리는 공연 {{ counts.week }}개">
 {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
@@ -28,17 +28,36 @@ h1 .d { color: var(--spot); }
 .sum b.n { color: var(--glow); }
 .nb { white-space: nowrap; }
 
-.controls { position: sticky; top: 0; z-index: 5; background: var(--night); padding: 10px 0 10px; border-bottom: 1px solid var(--night-2); }
-.controls .in { max-width: 640px; margin: 0 auto; padding: 0 16px; }
 .search { width: 100%; height: 44px; border-radius: 14px; border: 0; background: var(--night-2); color: var(--stock);
-  padding: 0 14px; font: inherit; font-size: 16px; }
+  padding: 0 14px; font: inherit; font-size: 16px; margin-top: 16px; }
 .search::placeholder { color: var(--dim); }
-.chips { display: flex; gap: 8px; overflow-x: auto; margin: 10px -16px 0; padding: 0 16px 2px; scrollbar-width: none; }
-.chips::-webkit-scrollbar { display: none; }
-.chip { flex: none; height: 34px; padding: 0 14px; border-radius: 17px; border: 1.5px solid var(--night-2); background: transparent;
-  color: var(--stock); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
-.chip[aria-pressed="true"] { background: var(--stock); color: var(--ink); border-color: var(--stock); }
-.chip.newonly[aria-pressed="true"] { background: var(--glow); border-color: var(--glow); color: #fff; }
+.range { margin-top: 6px; color: var(--dim); font-size: 13px; }
+
+.controls { position: sticky; top: 0; z-index: 5; background: var(--night); padding: 10px 0 8px; border-bottom: 1px solid var(--night-2); }
+.controls .in { max-width: 640px; margin: 0 auto; padding: 0 16px; }
+.places { display: flex; gap: 8px; }
+.sel { flex: 1 1 0; min-width: 0; height: 38px; border-radius: 12px; border: 1.5px solid var(--night-2); background: var(--night-2);
+  color: var(--stock); font: inherit; font-size: 14px; font-weight: 700; padding: 0 28px 0 12px; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%239A95C9' stroke-width='2'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 11px center; text-overflow: ellipsis; }
+.sel:disabled { opacity: .45; }
+.sel.on { background-color: var(--stock); color: var(--ink); border-color: var(--stock); }
+.dt.new { border: 1.5px solid var(--glow); color: var(--glow); }
+.dt.new[aria-pressed="true"] { background: var(--glow); color: #fff; }
+
+.dates { display: flex; gap: 6px; overflow-x: auto; margin: 8px -16px 0; padding: 0 16px 2px; scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding-inline: 16px; }
+.dates::-webkit-scrollbar { display: none; }
+.dt { flex: none; min-width: 52px; height: 52px; border-radius: 12px; border: 0; background: transparent; color: var(--stock);
+  font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 8px; scroll-snap-align: start; }
+.dt b { font-family: "BlackHan"; font-weight: 400; font-size: 17px; line-height: 1.1; }
+.dt small { font-size: 11px; color: var(--dim); font-weight: 600; margin-top: 2px; }
+.dt.sat small { color: #8FB4FF; } .dt.sun small { color: #FF8FB8; }
+.dt.word b { font-family: "Pretendard"; font-weight: 800; font-size: 14px; }
+.dt.month { min-width: auto; padding: 0 4px 0 10px; color: var(--spot); font-family: "BlackHan"; font-size: 14px; cursor: default; }
+.dt[aria-pressed="true"] { background: var(--spot); color: var(--ink); }
+.dt[aria-pressed="true"] small { color: var(--ink); }
+.dt:disabled { opacity: .3; cursor: default; }
 
 main { max-width: 640px; margin: 0 auto; padding: 0 16px 40px; }
 .day { margin-top: 26px; }
@@ -82,17 +101,19 @@ footer { max-width: 640px; margin: 0 auto; padding: 20px 16px 48px; color: var(-
 <body>
 <header>
   <div class="brand">{{ brand }}</div>
-  <h1><span class="d">{{ today_md }}</span> 전국<br>음악 공연</h1>
+  <h1><span class="d">{{ today_md }}</span> 전국<br>공연 일정</h1>
   <p class="sum">오늘 새로 뜬 공연 <span class="nb"><b class="n">{{ counts.new }}</b>개</span>, 7일 안에 열리는 공연 <span class="nb"><b>{{ counts.week }}</b>개</span>, <span class="nb">전체 <b>{{ counts.total }}</b>개</span></p>
+  <p class="range">오늘부터 {{ range_end_label }}까지 공연을 모았어요.</p>
+  <input class="search" type="search" placeholder="아티스트, 공연명, 공연장 검색" aria-label="검색">
 </header>
 
 <div class="controls"><div class="in">
-  <input class="search" type="search" placeholder="아티스트, 공연명, 공연장 검색" aria-label="검색">
-  <div class="chips" role="toolbar" aria-label="필터">
-    <button class="chip newonly" data-new aria-pressed="false">새로 뜬 공연</button>
-    <button class="chip" data-region="" aria-pressed="true">전국</button>
-    {% for r in regions %}<button class="chip" data-region="{{ r }}" aria-pressed="false">{{ r }}</button>{% endfor %}
+  <div class="places">
+    <select class="sel" id="region" aria-label="시·도"></select>
+    <select class="sel" id="city" aria-label="시·군·구" disabled></select>
+    <select class="sel" id="genre" aria-label="장르"></select>
   </div>
+  <div class="dates" id="dates" role="toolbar" aria-label="날짜"></div>
 </div></div>
 
 <main id="list" aria-live="polite"></main>
@@ -105,45 +126,135 @@ footer { max-width: 640px; margin: 0 auto; padding: 20px 16px 48px; color: var(-
 <script>
 const EVENTS = {{ events_json|safe }};
 const TODAY = "{{ today_iso }}";
+const RANGE_END = "{{ range_end_iso }}";
+const REGIONS = {{ regions|tojson }};
 const WD = "일월화수목금토";
-const st = { q: "", region: "", newOnly: false };
+const st = { q: "", region: "", city: "", genre: "", newOnly: false, from: "", to: "", dateKey: "all" };
 const $list = document.getElementById("list");
+const $region = document.getElementById("region");
+const $city = document.getElementById("city");
+const $genre = document.getElementById("genre");
+const GENRES = {{ genres|tojson }};
+const $dates = document.getElementById("dates");
 
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const md = iso => { const d = new Date(iso + "T00:00:00"); return `${d.getMonth()+1}.${d.getDate()}`; };
-const wd = iso => WD[new Date(iso + "T00:00:00").getDay()];
+const D = iso => new Date(iso + "T00:00:00");
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const addDays = (s, n) => { const d = D(s); d.setDate(d.getDate() + n); return iso(d); };
+const md = s => { const d = D(s); return `${d.getMonth()+1}.${d.getDate()}`; };
+const wd = s => WD[D(s).getDay()];
 const safeUrl = u => /^https?:\/\//.test(u || "") ? u : "";
+const endOf = e => e.end_date || e.start_date;
 
-function matches(e) {
+function weekend() {
+  const dow = D(TODAY).getDay();
+  if (dow === 0) return [TODAY, TODAY];
+  const sat = addDays(TODAY, 6 - dow);
+  return [dow === 6 ? TODAY : sat, addDays(sat, 1)];
+}
+
+// 날짜 외 조건
+function baseMatch(e) {
   if (st.region && e.region !== st.region) return false;
+  if (st.city && e.city !== st.city) return false;
+  if (st.genre && e.genre !== st.genre) return false;
   if (st.newOnly && !e.is_new) return false;
   if (st.q) {
-    const blob = (e.title + " " + e.artists.join(" ") + " " + e.venue).toLowerCase();
+    const blob = (e.title + " " + e.artists.join(" ") + " " + e.venue + " " + (e.city || "")).toLowerCase();
     if (!blob.includes(st.q)) return false;
   }
   return true;
 }
+const overlaps = (e, a, b) => e.start_date <= b && endOf(e) >= a;
 
-function row(e, i) {
-  const start = e.start_date < TODAY ? TODAY : e.start_date;
+// ---------------- 지역 선택
+function fillRegion() {
+  const pool = EVENTS.filter(e => !st.newOnly || e.is_new);
+  const cnt = {};
+  pool.forEach(e => { if (e.region) cnt[e.region] = (cnt[e.region] || 0) + 1; });
+  $region.innerHTML = `<option value="">전국 ${pool.length}</option>` +
+    REGIONS.map(r => `<option value="${esc(r)}"${r === st.region ? " selected" : ""}>${esc(r)} ${cnt[r] || 0}</option>`).join("");
+  $region.classList.toggle("on", !!st.region);
+}
+function fillCity() {
+  if (!st.region) {
+    $city.innerHTML = `<option value="">시·군·구</option>`; $city.disabled = true; $city.classList.remove("on"); return;
+  }
+  const cnt = {};
+  EVENTS.forEach(e => { if (e.region === st.region && e.city && (!st.newOnly || e.is_new)) cnt[e.city] = (cnt[e.city] || 0) + 1; });
+  const cities = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a] || a.localeCompare(b, "ko"));
+  $city.disabled = !cities.length;
+  $city.innerHTML = `<option value="">${esc(st.region)} 전체</option>` +
+    cities.map(c => `<option value="${esc(c)}"${c === st.city ? " selected" : ""}>${esc(c)} ${cnt[c]}</option>`).join("");
+  $city.classList.toggle("on", !!st.city);
+}
+
+function fillGenre() {
+  const cnt = {};
+  EVENTS.forEach(e => {
+    if ((!st.region || e.region === st.region) && (!st.city || e.city === st.city) && (!st.newOnly || e.is_new))
+      cnt[e.genre] = (cnt[e.genre] || 0) + 1;
+  });
+  $genre.innerHTML = `<option value="">모든 장르</option>` +
+    GENRES.filter(g => cnt[g] || g === st.genre).map(g => `<option value="${esc(g)}"${g === st.genre ? " selected" : ""}>${esc(g)} ${cnt[g] || 0}</option>`).join("");
+  $genre.classList.toggle("on", !!st.genre);
+}
+
+// ---------------- 날짜 띠
+function fillDates() {
+  const pool = EVENTS.filter(e => !e.long_run && baseMatch(e));
+  const per = {};
+  for (const e of pool) {
+    let d = e.start_date < TODAY ? TODAY : e.start_date;
+    const last = endOf(e) < RANGE_END ? endOf(e) : RANGE_END;
+    for (let n = 0; d <= last && n < 40; n++, d = addDays(d, 1)) per[d] = (per[d] || 0) + 1;
+  }
+  const [ws, we] = weekend();
+  const btn = (key, label, sub, cls = "", dis = false) =>
+    `<button class="dt ${cls}" data-key="${key}" aria-pressed="${st.dateKey === key}"${dis ? " disabled" : ""}><b>${label}</b>${sub ? `<small>${sub}</small>` : ""}</button>`;
+  let html = `<button class="dt word new" id="newonly" aria-pressed="${st.newOnly}"><b>새로 뜬</b><small>공연만</small></button>`
+    + btn("all", "전체", "", "word") + btn("weekend", "주말", `${md(ws)}~`, "word");
+  let month = -1;
+  for (let d = TODAY; d <= RANGE_END; d = addDays(d, 1)) {
+    const m = D(d).getMonth();
+    if (m !== month) { html += `<span class="dt month">${m + 1}월</span>`; month = m; }
+    const dow = D(d).getDay(), n = per[d] || 0;
+    const label = d === TODAY ? "오늘" : String(D(d).getDate());
+    html += btn(d, label, `${WD[dow]} ${n}`, (dow === 6 ? "sat" : dow === 0 ? "sun" : "") + (d === TODAY ? " word" : ""), !n);
+  }
+  const x = $dates.scrollLeft;
+  $dates.innerHTML = html;
+  $dates.scrollLeft = x;
+}
+function setDate(key) {
+  st.dateKey = key;
+  if (key === "all") { st.from = ""; st.to = ""; }
+  else if (key === "weekend") { [st.from, st.to] = weekend(); }
+  else { st.from = key; st.to = key; }
+}
+
+// ---------------- 목록
+function row(e, i, anchor) {
+  const day = anchor || (e.start_date < TODAY ? TODAY : e.start_date);
   const links = e.ticket_links.filter(l => safeUrl(l.url)).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name || "예매")}</a>`).join("");
   const srcs = e.sources.filter(s => safeUrl(s.url)).slice(0, 3).map(s => `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a>`).join("");
+  const place = [e.region, e.city].filter(Boolean).join(" ");
   return `
   <button class="stub" aria-expanded="false" aria-controls="d${i}">
     <div class="date">${e.long_run
-      ? `<div class="md">${md(e.end_date)}</div><div class="wd">까지</div>`
-      : `<div class="md">${md(start)}</div><div class="wd">${wd(start)}</div>`}</div>
+      ? `<div class="md">${md(endOf(e))}</div><div class="wd">까지</div>`
+      : `<div class="md">${md(day)}</div><div class="wd">${wd(day)}</div>`}</div>
     <div class="body">
       <div class="t">${e.is_new ? '<span class="nw">NEW</span>' : ""}${esc(e.title)}</div>
       ${e.artists.length ? `<div class="w">${esc(e.artists.join(", "))}</div>` : ""}
-      <div class="p">${e.region ? `<span class="rg">${esc(e.region)}</span>` : ""}<span>${esc(e.venue || "장소 미정")}</span></div>
+      <div class="p">${place ? `<span class="rg">${esc(place)}</span>` : ""}<span>${esc(e.venue || "장소 미정")}</span></div>
       ${e.ticket_open ? `<div class="tk">티켓 오픈 ${esc(e.ticket_open)}</div>` : ""}
     </div>
     ${safeUrl(e.poster) ? `<div class="thumb" style="background-image:url('${esc(e.poster)}')"></div>` : ""}
   </button>
   <div class="detail" id="d${i}">
     <dl>
-      <dt>기간</dt><dd>${md(e.start_date)}(${wd(e.start_date)})${e.end_date !== e.start_date ? ` ~ ${md(e.end_date)}(${wd(e.end_date)})` : ""}</dd>
+      <dt>기간</dt><dd>${md(e.start_date)}(${wd(e.start_date)})${endOf(e) !== e.start_date ? ` ~ ${md(endOf(e))}(${wd(endOf(e))})` : ""}</dd>
       ${e.times ? `<dt>시간</dt><dd>${esc(e.times)}</dd>` : ""}
       ${e.price ? `<dt>가격</dt><dd>${esc(e.price)}</dd>` : ""}
       <dt>장르</dt><dd>${esc(e.genre)}</dd>
@@ -153,16 +264,17 @@ function row(e, i) {
   </div>`;
 }
 
-function render() {
-  const items = EVENTS.filter(matches);
+function renderList() {
+  const a = st.from || TODAY, b = st.to || "9999-12-31";
+  const items = EVENTS.filter(e => baseMatch(e) && overlaps(e, a, b));
   if (!items.length) {
-    $list.innerHTML = `<p class="empty">조건에 맞는 공연이 없어요.<br>다른 지역이나 검색어로 찾아보세요.</p>`;
+    $list.innerHTML = `<p class="empty">조건에 맞는 공연이 없어요.<br>다른 날짜나 지역을 골라 보세요.</p>`;
     return;
   }
   const groups = new Map();
   const longRuns = items.filter(e => e.long_run);
   for (const e of items.filter(e => !e.long_run)) {
-    const k = e.start_date < TODAY ? TODAY : e.start_date;
+    const k = e.start_date < a ? a : e.start_date;
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(e);
   }
@@ -170,16 +282,18 @@ function render() {
   for (const [k, evs] of [...groups].sort()) {
     const label = k === TODAY ? "오늘" : `${md(k)} ${wd(k)}요일`;
     html += `<section class="day"><h2 class="${k === TODAY ? "today" : ""}">${label}<span>${evs.length}개</span></h2>`;
-    for (const e of evs) html += row(e, i++);
+    for (const e of evs) html += row(e, i++, k);
     html += `</section>`;
   }
   if (longRuns.length) {
     html += `<section class="day"><h2>상설·장기 공연<span>${longRuns.length}개</span></h2>`;
-    for (const e of longRuns.sort((a, b) => a.end_date.localeCompare(b.end_date))) html += row(e, i++);
+    for (const e of longRuns.sort((x, y) => endOf(x).localeCompare(endOf(y)))) html += row(e, i++);
     html += `</section>`;
   }
   $list.innerHTML = html;
 }
+
+function render() { fillRegion(); fillCity(); fillGenre(); fillDates(); renderList(); }
 
 $list.addEventListener("click", ev => {
   const b = ev.target.closest(".stub"); if (!b) return;
@@ -187,15 +301,16 @@ $list.addEventListener("click", ev => {
   const open = d.classList.toggle("open");
   b.setAttribute("aria-expanded", open);
 });
-document.querySelector(".search").addEventListener("input", e => { st.q = e.target.value.trim().toLowerCase(); render(); });
-document.querySelectorAll(".chip[data-region]").forEach(c => c.addEventListener("click", () => {
-  st.region = c.dataset.region;
-  document.querySelectorAll(".chip[data-region]").forEach(x => x.setAttribute("aria-pressed", x === c));
-  render();
-}));
-document.querySelector(".chip[data-new]").addEventListener("click", e => {
-  st.newOnly = !st.newOnly; e.currentTarget.setAttribute("aria-pressed", st.newOnly); render();
+$dates.addEventListener("click", ev => {
+  if (ev.target.closest("#newonly")) { st.newOnly = !st.newOnly; render(); return; }
+  const b = ev.target.closest(".dt[data-key]"); if (!b || b.disabled) return;
+  setDate(st.dateKey === b.dataset.key ? "all" : b.dataset.key);
+  fillDates(); renderList(); window.scrollTo({ top: document.querySelector(".controls").offsetTop, behavior: "smooth" });
 });
+$region.addEventListener("change", () => { st.region = $region.value; st.city = ""; render(); });
+$city.addEventListener("change", () => { st.city = $city.value; render(); });
+$genre.addEventListener("change", () => { st.genre = $genre.value; render(); });
+document.querySelector(".search").addEventListener("input", e => { st.q = e.target.value.trim().toLowerCase(); fillDates(); renderList(); });
 render();
 </script>
 </body>

@@ -79,6 +79,32 @@ def find_region(text: str) -> str:
     return normalize_region(text)
 
 
+GENRES = ["대중음악", "클래식", "국악", "서커스·마술", "버스킹"]
+
+
+def guess_genre(text: str) -> str:
+    t = text or ""
+    if re.search(r"버스킹|거리\s?공연|길거리\s?공연", t):
+        return "버스킹"
+    if re.search(r"마술|매직\s?쇼|매지션|서커스|저글링", t):
+        return "서커스·마술"
+    return ""
+
+
+def parse_city(address: str) -> str:
+    """도로명/지번 주소 → 시군구. '경기도 수원시 팔달구 …' → '수원시', '서울특별시 송파구 …' → '송파구'."""
+    toks = (address or "").replace("(", " ").split()
+    if len(toks) < 2:
+        return ""
+    region = normalize_region(toks[0])
+    if region == "세종":
+        return "세종시"
+    t = toks[1]
+    if t.endswith(("시", "군", "구")) and len(t) >= 2:
+        return t
+    return ""
+
+
 def norm_text(s: str) -> str:
     """중복 비교용 정규화: 괄호/공백/특수문자 제거, 소문자."""
     s = html.unescape(s or "").lower()

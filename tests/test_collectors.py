@@ -14,7 +14,7 @@ LIST = """<?xml version="1.0" encoding="UTF-8"?><dbs><db><mt20id>PF100001</mt20i
 <prfpdfrom>2026.11.14</prfpdfrom><prfpdto>2026.11.15</prfpdto><fcltynm>올림픽공원 (올림픽홀)</fcltynm>
 <poster>http://www.kopis.or.kr/upload/p.gif</poster><area>서울특별시</area><genrenm>대중음악</genrenm><prfstate>공연예정</prfstate></db></dbs>"""
 DETAIL = """<?xml version="1.0" encoding="UTF-8"?><dbs><db><prfcast>테스트 밴드, 게스트 등</prfcast><pcseguidance>전석 99,000원</pcseguidance>
-<dtguidance>토요일(18:00), 일요일(17:00)</dtguidance><area>서울특별시</area>
+<dtguidance>토요일(18:00), 일요일(17:00)</dtguidance><area>서울특별시</area><mt10id>FC000001</mt10id>
 <relates><relate><relatenm>인터파크</relatenm><relateurl>https://tickets.example.com/1</relateurl></relate></relates></db></dbs>"""
 
 
@@ -33,11 +33,14 @@ class FakeSession:
 
 def test_kopis(monkeypatch, tmp_path):
     monkeypatch.setattr(kopis, "CACHE", str(tmp_path / "kopis_detail.json"))
-    monkeypatch.setattr(kopis, "session", lambda: FakeSession({"pblprfr/PF": DETAIL, "pblprfr": LIST}))
+    monkeypatch.setattr(kopis, "FAC_CACHE", str(tmp_path / "kopis_facility.json"))
+    FAC = '<?xml version="1.0" encoding="UTF-8"?><dbs><db><fcltynm>올림픽공원</fcltynm><adres>서울특별시 송파구 올림픽로 424</adres></db></dbs>'
+    monkeypatch.setattr(kopis, "session", lambda: FakeSession({"prfplc/FC": FAC, "pblprfr/PF": DETAIL, "pblprfr": LIST}))
     ev, _ = kopis.collect({"genres": ["CCCD"]}, {"KOPIS_API_KEY": "k"}, {})
     e = ev[0]
     assert e.start_date == "2026-11-14" and e.region == "서울" and e.artists == ["테스트 밴드", "게스트"]
     assert e.ticket_links[0]["url"].startswith("https://") and e.poster.startswith("https://")
+    assert e.city == "송파구"
 
 
 def test_naver(monkeypatch):

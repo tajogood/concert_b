@@ -51,7 +51,7 @@ def same_event(a: Event, b: Event) -> bool:
 
 
 def merge_into(base: Event, new: Event):
-    hi, lo = (new, base) if new.confidence > base.confidence else (base, new)
+    hi, lo = (new, base) if new.confidence >= base.confidence else (base, new)
     if hi is new:
         base.title, base.start_date, base.end_date = new.title, new.start_date, new.end_date
     for f in FIELDS_FILL:

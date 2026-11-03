@@ -8,7 +8,7 @@ from datetime import date, timedelta
 from jinja2 import Environment, FileSystemLoader
 
 from .models import Event
-from .util import REGION_ORDER, WEEKDAYS, kdate, now_kst, today_kst
+from .util import GENRES, REGION_ORDER, WEEKDAYS, kdate, now_kst, today_kst
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCE_LABELS = {"kopis": "KOPIS", "seoul": "서울시", "naver_news": "뉴스", "naver_cafe": "네이버 카페",
@@ -72,12 +72,18 @@ def build_site(events: list[Event], cfg: dict, out_dir: str) -> str:
         d["long_run"] = is_long_run(e)
         d["sources"] = [{"label": SOURCE_LABELS.get(s.name.split(":")[0], s.name.split(":")[-1] or "출처"), "url": s.url}
                         for s in e.sources]
-        rows.append({k: d[k] for k in ("title", "artists", "start_date", "end_date", "venue", "region", "genre",
+        rows.append({k: d[k] for k in ("title", "artists", "start_date", "end_date", "venue", "region", "city", "genre",
                                        "times", "price", "poster", "ticket_links", "ticket_open", "sources",
                                        "confidence", "is_new", "long_run")})
-    regions = [r for r in REGION_ORDER if any(e.region == r for e in events)]
+    from collections import Counter
+    cnt = Counter(e.region for e in events if e.region)
+    regions = sorted(cnt, key=lambda r: (-cnt[r], REGION_ORDER.index(r) if r in REGION_ORDER else 99))
+    last_day = max(((e.end_date or e.start_date) for e in events if not is_long_run(e)), default=today)
+    horizon = (today_kst() + timedelta(days=int(cfg.get("sources", {}).get("kopis", {}).get("days_ahead", 90)))).isoformat()
+    range_end = min(last_day, horizon)
     html = env.get_template("index.html.j2").render(
         brand=cfg["brand"], base_css=_base_css("fonts"), today_md=kdate(today, False), today_iso=today,
+        range_end_iso=range_end, genres=GENRES, range_end_label=f"{date.fromisoformat(range_end).year}년 {kdate(range_end)}",
         counts={"new": len(new), "week": len(week), "total": len(events)}, regions=regions,
         events_json=json.dumps(rows, ensure_ascii=False).replace("</", "<\\/"),
         updated=now_kst().strftime("%Y-%m-%d %H:%M"), og_image=cfg.get("og_image", ""),
@@ -160,7 +166,7 @@ def build_slides(events: list[Event], cfg: dict, out_dir: str) -> list[str]:
 def build_caption(events: list[Event], cfg: dict) -> str:
     today, new, week = summarize(events)
     d = today_kst()
-    lines = [f"{d.month}월 {d.day}일 전국 음악 공연 소식", ""]
+    lines = [f"{d.month}월 {d.day}일 전국 공연 소식", ""]
     if new:
         lines.append(f"새로 뜬 공연 {len(new)}개")
         for e in sorted(new, key=lambda x: x.start_date)[:8]:

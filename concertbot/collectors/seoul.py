@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from ..models import Event, Source
-from ..util import now_kst, parse_ymd, today_kst, session
+from ..util import guess_genre, now_kst, parse_ymd, today_kst, session
 from .base import need
 
 URL = "http://openapi.seoul.go.kr:8088/{key}/json/culturalEventInfo/{a}/{b}/"
@@ -10,6 +10,7 @@ URL = "http://openapi.seoul.go.kr:8088/{key}/json/culturalEventInfo/{a}/{b}/"
 def collect(cfg, secrets, config):
     (key,) = need(secrets, "SEOUL_API_KEY")
     codes = set(cfg.get("codenames", ["콘서트", "클래식", "국악"]))
+    kw = cfg.get("keywords_any_code", [])
     s = session()
     fetched = now_kst().isoformat(timespec="seconds")
     today = today_kst().isoformat()
@@ -19,7 +20,9 @@ def collect(cfg, secrets, config):
         r.raise_for_status()
         rows = r.json().get("culturalEventInfo", {}).get("row", [])
         for row in rows:
-            if row.get("CODENAME") not in codes:
+            title = row.get("TITLE", "")
+            hit_kw = any(k in title for k in kw)
+            if row.get("CODENAME") not in codes and not hit_kw:
                 continue
             ed = parse_ymd(row.get("END_DATE", ""))
             if ed and ed < today:
@@ -32,7 +35,7 @@ def collect(cfg, secrets, config):
                 region="서울",
                 city=row.get("GUNAME", ""),
                 artists=[p.strip() for p in (row.get("PLAYER") or "").split(",") if p.strip()][:6],
-                genre={"콘서트": "대중음악"}.get(row.get("CODENAME"), row.get("CODENAME")),
+                genre=guess_genre(title) or {"콘서트": "대중음악"}.get(row.get("CODENAME"), row.get("CODENAME")),
                 times=row.get("DATE", ""),
                 price=row.get("USE_FEE", "") or ("무료" if row.get("IS_FREE") == "무료" else ""),
                 poster=row.get("MAIN_IMG", ""),

@@ -19,12 +19,14 @@ sources:
   kopis:                     # ★ 핵심. 전국 공연 정형 데이터
     enabled: true
     days_ahead: 90
-    genres: [CCCD, CCCA, CCCC]   # 대중음악, 클래식, 국악 (뮤지컬 추가: GGGA)
-    max_detail: 1500             # 하루에 새로 조회할 상세(출연진·가격·예매처) 최대 건수. 조회 결과는 캐시
+    genres: [CCCD, CCCA, CCCC, EEEB]   # 대중음악, 클래식, 국악, 서커스·마술 (뮤지컬 추가: GGGA)
+    max_detail: 2000             # 하루에 새로 조회할 상세(출연진·가격·예매처) 최대 건수. 조회 결과는 캐시
+    max_facility: 800            # 하루에 새로 조회할 공연장 주소(시군구 판별용) 최대 건수. 결과는 캐시
 
   seoul:                     # 서울시 문화행사
     enabled: true
     codenames: [콘서트, 클래식, 국악]
+    keywords_any_code: [버스킹, 거리공연, 마술, 매직, 서커스]   # 다른 분류여도 제목에 이 단어가 있으면 수집
 
   datagokr:                  # 공공데이터포털/지자체 API (명세 확인 후 endpoints 채우기)
     enabled: false
@@ -54,6 +56,12 @@ sources:
       - 음악 페스티벌 라인업
       - 팬콘서트 개최
       - 전국투어 콘서트
+      - 버스킹 일정
+      - 거리공연 일정
+      - 버스킹 공연 개최
+      - 마술 공연
+      - 매직쇼 공연
+      - 서커스 공연
 
   daum:                      # 다음 카페(팬카페) — 카카오 검색 API
     enabled: true
@@ -61,6 +69,8 @@ sources:
     queries:
       - 콘서트 티켓 오픈
       - 콘서트 공지
+      - 버스킹 일정
+      - 버스킹 공지
 
   x_api:                     # X 공식 API (유료). 토큰 있을 때만 동작
     enabled: false
@@ -78,7 +88,7 @@ sources:
 
   instagram:                 # 인스타 해시태그 + 공식 계정 조회 (업로드 토큰 재사용)
     enabled: true
-    hashtags: [콘서트티켓팅, 단독콘서트, 콘서트일정, 내한공연, 뮤직페스티벌]   # 7일간 30개까지
+    hashtags: [콘서트티켓팅, 단독콘서트, 콘서트일정, 내한공연, 뮤직페스티벌, 버스킹, 버스킹일정, 거리공연, 마술공연, 서커스공연]   # 7일간 30개까지
     accounts: []             # 기획사·공연장 비즈니스 계정 핸들
     account_media_limit: 8
 
@@ -105,5 +115,5 @@ instagram:
   per_slide_new: 3
   per_slide_week: 3
   show_posters: true
-  genre_priority: [대중음악, 클래식, 국악]   # 이번 주 슬라이드에서 먼저 보여줄 장르 순서
-  hashtags: [콘서트, 공연정보, 콘서트일정, 공연일정, 오늘의공연, 티켓팅]
+  genre_priority: [대중음악, 버스킹, 서커스·마술, 클래식, 국악]   # 이번 주 슬라이드에서 먼저 보여줄 장르 순서
+  hashtags: [콘서트, 공연정보, 콘서트일정, 공연일정, 오늘의공연, 티켓팅, 버스킹, 마술공연]
