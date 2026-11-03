@@ -80,6 +80,7 @@ jobs:
         if: steps.slot.outputs.slot == 'noon'
         env:
           KOPIS_API_KEY: ${{ secrets.KOPIS_API_KEY }}
+          TOUR_API_KEY: ${{ secrets.TOUR_API_KEY }}
           SEOUL_API_KEY: ${{ secrets.SEOUL_API_KEY }}
           DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
           NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}

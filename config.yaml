@@ -1,7 +1,7 @@
 brand: "ON STAGE"                    # 서비스 이름 (로고: assets/brand/logo.png)
 company: "주식회사 라릭"
 contact_email: "david@larix.kr"
-data_credit: "출처: (재)예술경영지원센터 공연예술통합전산망(www.kopis.or.kr)"
+data_credit: "출처: (재)예술경영지원센터 공연예술통합전산망(www.kopis.or.kr), 한국관광공사"
 site_url: ""                         # 예: https://<github아이디>.github.io/concert-bot  (워크플로가 자동 주입)
 site_dir: site
 
@@ -27,6 +27,12 @@ sources:
     max_facility: 300            # 하루에 새로 조회할 공연장 주소(시군구 판별) 최대 건수
     pace_sec: 0.8                # 호출 간격. KOPIS는 몰아서 호출하면 차단함
     time_budget_sec: 900         # 상세·주소 조회에 쓸 최대 시간
+
+  tour:                      # 한국관광공사 행사정보(공공데이터포털) — 축제·버스킹·거리공연
+    enabled: true
+    days_ahead: 90
+    fetch_detail: true         # 소개글·장소·요금 조회
+    check_overview: true       # '공연' 분류는 소개글까지 보고 음악·버스킹이면 수집
 
   seoul:                     # 서울시 문화행사
     enabled: true
@@ -120,5 +126,5 @@ instagram:
   regions: [서울, 경기]             # 게시물을 만들 지역. 회차마다 (지역 수 × 주 수)개 게시
   per_slide_week: 3
   show_posters: true
-  genre_priority: [대중음악, 버스킹, 서커스·마술, 클래식, 국악]   # 이번 주 슬라이드에서 먼저 보여줄 장르 순서
+  genre_priority: [대중음악, 축제, 버스킹, 서커스·마술, 클래식, 국악]   # 이번 주 슬라이드에서 먼저 보여줄 장르 순서
   hashtags: [콘서트, 공연정보, 콘서트일정, 공연일정, 오늘의공연, 티켓팅, 버스킹, 마술공연]

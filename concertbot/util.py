@@ -79,7 +79,7 @@ def find_region(text: str) -> str:
     return normalize_region(text)
 
 
-GENRES = ["대중음악", "클래식", "국악", "서커스·마술", "버스킹"]
+GENRES = ["대중음악", "클래식", "국악", "서커스·마술", "버스킹", "축제"]
 
 
 def guess_genre(text: str) -> str:

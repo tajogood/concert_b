@@ -16,7 +16,7 @@ from concertbot.models import Event
 from concertbot.util import log, now_kst, today_kst
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
-SECRET_KEYS = ["KOPIS_API_KEY", "SEOUL_API_KEY", "DATA_GO_KR_KEY", "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET",
+SECRET_KEYS = ["KOPIS_API_KEY", "TOUR_API_KEY", "SEOUL_API_KEY", "DATA_GO_KR_KEY", "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET",
                "KAKAO_REST_KEY", "X_BEARER_TOKEN", "X_STORAGE_STATE_B64", "IG_ACCESS_TOKEN", "IG_USER_ID",
                "ANTHROPIC_API_KEY"]
 

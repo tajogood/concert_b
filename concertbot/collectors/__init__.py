@@ -4,10 +4,11 @@ import traceback
 
 from ..util import log
 from .base import SkipSource
-from . import kopis, seoul, datagokr, naver, daum, x_api, x_scrape, instagram_tags, web_board
+from . import kopis, tour, seoul, datagokr, naver, daum, x_api, x_scrape, instagram_tags, web_board
 
 REGISTRY = {
     "kopis": kopis.collect,
+    "tour": tour.collect,
     "seoul": seoul.collect,
     "datagokr": datagokr.collect,
     "naver": naver.collect,

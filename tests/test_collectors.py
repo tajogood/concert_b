@@ -75,3 +75,43 @@ def test_kopis_partial_failure(monkeypatch, tmp_path):
     monkeypatch.setattr(kopis, "session", lambda: Flaky({"pblprfr/PF": DETAIL, "pblprfr": LIST}))
     ev, _ = kopis.collect({"genres": ["CCCD", "CCCA"]}, {"KOPIS_API_KEY": "k"}, {})
     assert len(ev) == 1  # CCCA 실패해도 CCCD 결과는 살린다
+
+
+def test_tour(monkeypatch):
+    from concertbot.collectors import tour
+    monkeypatch.setattr(tour.time, "sleep", lambda *_: None)
+    d = lambda n: (today_kst() + timedelta(days=n)).strftime("%Y%m%d")  # noqa: E731
+    items = [
+        {"contentid": "1", "title": "2026 서울거리공연 구석구석라이브", "eventstartdate": d(-100), "eventenddate": d(50),
+         "addr1": "서울특별시 중구 세종대로 110", "lDongRegnCd": "11", "lclsSystm2": "EV02", "lclsSystm3": "EV020900", "firstimage": "http://x/1.jpg"},
+        {"contentid": "2", "title": "청송사과축제", "eventstartdate": d(1), "eventenddate": d(5),
+         "addr1": "경상북도 청송군 청송읍", "lDongRegnCd": "47", "lclsSystm2": "EV01", "lclsSystm3": "EV010100"},
+        {"contentid": "3", "title": "부산브릿지마라톤", "eventstartdate": d(3), "eventenddate": d(3),
+         "addr1": "부산광역시 남구", "lDongRegnCd": "26", "lclsSystm2": "EV03", "lclsSystm3": "EV030400"},
+        {"contentid": "4", "title": "문화가 흐르는 서울광장", "eventstartdate": d(1), "eventenddate": d(60),
+         "addr1": "서울특별시 중구 세종대로 110", "lDongRegnCd": "11", "lclsSystm2": "EV02", "lclsSystm3": "EV020900"},
+    ]
+
+    class S:
+        headers = {}
+
+        def get(self, url, params=None, timeout=None):
+            if url.endswith("searchFestival2"):
+                body = {"items": {"item": items}, "totalCount": len(items)}
+            elif url.endswith("detailCommon2"):
+                ov = "점심시간 버스킹 공연이 열립니다" if params["contentId"] == "4" else "소개"
+                body = {"items": {"item": [{"overview": ov, "homepage": '<a href="https://h.example">x</a>'}]}, "totalCount": 1}
+            else:
+                body = {"items": {"item": [{"eventplace": "서울광장", "playtime": "12:00", "usetimefestival": "무료"}]}, "totalCount": 1}
+            b = json.dumps({"response": {"body": body}}).encode()
+            return SimpleNamespace(status_code=200, headers={"content-type": "application/json"}, content=b, text=b.decode(),
+                                   json=lambda: json.loads(b))
+
+    monkeypatch.setattr(tour, "session", lambda: S())
+    ev, _ = tour.collect({}, {"TOUR_API_KEY": "a%2Bb"}, {})
+    got = {e.title: e for e in ev}
+    assert set(got) == {"2026 서울거리공연 구석구석라이브", "청송사과축제", "문화가 흐르는 서울광장"}
+    assert got["2026 서울거리공연 구석구석라이브"].genre == "버스킹"
+    assert got["청송사과축제"].genre == "축제" and got["청송사과축제"].city == "청송군"
+    assert got["문화가 흐르는 서울광장"].genre == "버스킹"
+    assert got["청송사과축제"].ticket_links[0]["url"] == "https://h.example"

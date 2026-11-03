@@ -11,7 +11,7 @@ from .models import Event
 from .util import GENRES, REGION_FULL, REGION_SLUG, REGION_ORDER, WEEKDAYS, kdate, now_kst, today_kst, week_info
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SOURCE_LABELS = {"kopis": "KOPIS", "seoul": "서울시", "naver_news": "뉴스", "naver_cafe": "네이버 카페",
+SOURCE_LABELS = {"kopis": "KOPIS", "tour": "한국관광공사", "seoul": "서울시", "naver_news": "뉴스", "naver_cafe": "네이버 카페",
                  "naver_blog": "블로그", "daum_cafe": "다음 카페", "x": "X", "instagram": "인스타그램"}
 
 env = Environment(loader=FileSystemLoader(os.path.join(ROOT, "templates")), autoescape=True)
