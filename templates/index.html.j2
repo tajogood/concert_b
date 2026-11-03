@@ -187,7 +187,7 @@ function fillCity() {
   EVENTS.forEach(e => { if (e.region === st.region && e.city && (!st.newOnly || e.is_new)) cnt[e.city] = (cnt[e.city] || 0) + 1; });
   const cities = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a] || a.localeCompare(b, "ko"));
   $city.disabled = !cities.length;
-  $city.innerHTML = `<option value="">${esc(st.region)} 전체</option>` +
+  $city.innerHTML = `<option value="">${cities.length ? esc(st.region) + " 전체" : "시·군·구 정보 없음"}</option>` +
     cities.map(c => `<option value="${esc(c)}"${c === st.city ? " selected" : ""}>${esc(c)} ${cnt[c]}</option>`).join("");
   $city.classList.toggle("on", !!st.city);
 }
