@@ -28,7 +28,7 @@ def collect(cfg, secrets, config):
     st = today_kst()
     ed = st + timedelta(days=days)
     genres = cfg.get("genres", ["CCCD"])
-    max_detail = int(cfg.get("max_detail", 300))
+    max_detail = int(cfg.get("max_detail", 500))
     fetched = now_kst().isoformat(timespec="seconds")
 
     items = []
@@ -49,7 +49,7 @@ def collect(cfg, secrets, config):
             if len(dbs) < 100 or page >= 30:
                 break
             page += 1
-            time.sleep(0.5)
+            time.sleep(1.0)
     if failures:
         log.warning("[kopis] list pages failed: %s (수집된 %d건으로 계속)", ", ".join(failures), len(items))
     if not items:
@@ -57,8 +57,17 @@ def collect(cfg, secrets, config):
 
     cache = _load(CACHE)
     facilities = _load(FAC_CACHE)
-    max_fac = int(cfg.get("max_facility", 800))
+    max_fac = int(cfg.get("max_facility", 300))
+    pace = float(cfg.get("pace_sec", 0.8))
+    deadline = time.time() + int(cfg.get("time_budget_sec", 900))
     fetched_detail = fetched_fac = fails = 0
+    stop_lookups = False
+
+    def budget_ok():
+        return not stop_lookups and time.time() < deadline
+
+    # 가까운 날짜 공연부터 상세·주소를 채운다
+    items.sort(key=lambda x: max(parse_ymd(_txt(x[1], "prfpdfrom")) or "9", today_kst().isoformat()))
     events = []
     for g, db in items:
         mt20id = _txt(db, "mt20id")
@@ -74,32 +83,34 @@ def collect(cfg, secrets, config):
             sources=[Source("kopis", f"https://www.kopis.or.kr/por/db/pblprfr/pblprfrView.do?menuId=MNU_00020&mt20Id={mt20id}", fetched)],
             confidence=1.0,
         )
-        if ("mt10id" not in cache.get(mt20id, {})) and fetched_detail < max_detail:
+        if "mt10id" not in cache.get(mt20id, {}) and fetched_detail < max_detail and budget_ok():
+            fetched_detail += 1
             try:
                 cache[mt20id] = _fetch_detail(s, key, mt20id)
                 fails = 0
             except Exception as e:  # noqa: BLE001
                 log.debug("kopis detail %s failed: %s", mt20id, e)
                 fails += 1
-                if fails >= 5:
-                    log.warning("[kopis] 상세 조회가 연속 실패해 오늘은 여기까지 (%d건 조회)", fetched_detail)
-                    max_detail = fetched_detail
-            fetched_detail += 1
-            time.sleep(0.2)
+            time.sleep(pace)
         if mt20id in cache:
             _apply_detail(cache[mt20id], ev)
             fid = cache[mt20id].get("mt10id", "")
-            if fid and fid not in facilities and fetched_fac < max_fac:
+            if fid and fid not in facilities and fetched_fac < max_fac and budget_ok():
+                fetched_fac += 1
                 try:
                     facilities[fid] = _fetch_facility(s, key, fid)
+                    fails = 0
                 except Exception as e:  # noqa: BLE001
                     log.debug("kopis facility %s failed: %s", fid, e)
-                fetched_fac += 1
-                time.sleep(0.2)
+                    fails += 1
+                time.sleep(pace)
             fac = facilities.get(fid, {})
             ev.city = fac.get("city", "")
             if not ev.region and fac.get("address"):
                 ev.region = normalize_region(fac["address"])
+        if fails >= 4 and not stop_lookups:
+            stop_lookups = True
+            log.warning("[kopis] 연속 차단돼 오늘 상세·주소 조회는 여기까지 (상세 %d, 주소 %d)", fetched_detail, fetched_fac)
         if ev.start_date:
             events.append(ev)
     if not failures:  # 목록을 다 받았을 때만 끝난 공연의 캐시를 정리
@@ -123,7 +134,8 @@ def _get(s, url, params, tries=4):
             last = f"HTTP {r.status_code} {r.text[:200]!r}"
         except Exception as e:  # noqa: BLE001
             last = str(e)
-        time.sleep(3 * (n + 1) ** 2)
+        if n < tries - 1:
+            time.sleep(20 if "Blocked" in last else 3 * (n + 1) ** 2)
     log.warning("[kopis] %s failed: %s", url.rsplit("/", 1)[-1], last)
     return None
 

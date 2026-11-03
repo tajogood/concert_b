@@ -23,8 +23,10 @@ sources:
     enabled: true
     days_ahead: 90
     genres: [CCCD, CCCA, CCCC, EEEB]   # 대중음악, 클래식, 국악, 서커스·마술 (뮤지컬 추가: GGGA)
-    max_detail: 2000             # 하루에 새로 조회할 상세(출연진·가격·예매처) 최대 건수. 조회 결과는 캐시
-    max_facility: 800            # 하루에 새로 조회할 공연장 주소(시군구 판별용) 최대 건수. 결과는 캐시
+    max_detail: 500              # 하루에 새로 조회할 상세(출연진·가격·예매처) 최대 건수. 결과는 캐시돼 며칠에 걸쳐 채워짐
+    max_facility: 300            # 하루에 새로 조회할 공연장 주소(시군구 판별) 최대 건수
+    pace_sec: 0.8                # 호출 간격. KOPIS는 몰아서 호출하면 차단함
+    time_budget_sec: 900         # 상세·주소 조회에 쓸 최대 시간
 
   seoul:                     # 서울시 문화행사
     enabled: true
@@ -115,7 +117,7 @@ instagram:
   api_host: graph.facebook.com     # Facebook 로그인 토큰 기준 (해시태그 검색도 이 방식에서만 가능)
   api_version: v26.0
   max_slides: 10                   # 표지·마무리 포함. API 최대 20
-  per_slide_new: 3
+  regions: [서울, 경기]             # 게시물을 만들 지역. 회차마다 (지역 수 × 주 수)개 게시
   per_slide_week: 3
   show_posters: true
   genre_priority: [대중음악, 버스킹, 서커스·마술, 클래식, 국악]   # 이번 주 슬라이드에서 먼저 보여줄 장르 순서

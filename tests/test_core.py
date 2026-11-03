@@ -68,3 +68,16 @@ def test_guess_genre():
     assert guess_genre("홍대 버스킹 데이") == "버스킹"
     assert guess_genre("이은결 매직쇼") == "서커스·마술"
     assert guess_genre("단독 콘서트") == ""
+
+
+def test_plan_posts_slots():
+    from concertbot import render
+    evs = [Event(f"서울 공연 {i}", d(i), venue="롤링홀", region="서울", sources=[Source("kopis", f"k{i}")]) for i in range(0, 21)]
+    cfg = {"brand": "x", "instagram": {"regions": ["서울", "부산"]}}
+    noon = render.plan_posts(evs, cfg, "noon")
+    eve = render.plan_posts(evs, cfg, "evening")
+    assert [p["region"] for p in noon] == ["서울"]  # 부산은 공연이 없어 건너뜀
+    assert len(eve) == 2 and eve[0]["key"] != eve[1]["key"]
+    assert noon[0]["start"] == today_kst().isoformat()
+    assert noon[0]["slides"][0]["kind"] == "cover" and noon[0]["slides"][-1]["kind"] == "outro"
+    assert "seoul" in noon[0]["key"]

@@ -33,7 +33,13 @@ def secrets():
     return {k: os.environ.get(k, "") for k in SECRET_KEYS}
 
 
-def paths(cfg):
+def resolve_slot(args) -> str:
+    if getattr(args, "slot", "auto") in ("noon", "evening"):
+        return args.slot
+    return "noon" if now_kst().hour < 15 else "evening"
+
+
+def paths(cfg, slot="noon"):
     d = today_kst().isoformat()
     site = os.path.join(ROOT, cfg.get("site_dir", "site"))
     return {
@@ -41,9 +47,11 @@ def paths(cfg):
         "posted": os.path.join(ROOT, "data", "posted.json"),
         "report": os.path.join(ROOT, "data", "last_report.json"),
         "site": site,
-        "cards": os.path.join(site, "cards", d),
-        "work": os.path.join(ROOT, "build", d),
+        "cards": os.path.join(site, "cards", f"{d}-{slot}"),
+        "cards_rel": f"cards/{d}-{slot}",
+        "work": os.path.join(ROOT, "build", f"{d}-{slot}"),
         "date": d,
+        "run": f"{d}-{slot}",
     }
 
 
@@ -76,53 +84,73 @@ def cmd_collect(cfg, args):
 
 
 def cmd_build(cfg, args):
-    P = paths(cfg)
+    slot = resolve_slot(args)
+    P = paths(cfg, slot)
     events = store.publishable(store.load(P["events"]), float(cfg.get("min_confidence_site", 0.5)))
     idx = render.build_site(events, cfg, P["site"])
     log.info("[build] site → %s (%d events)", idx, len(events))
 
-    ig_events = store.publishable(events, float(cfg.get("min_confidence_instagram", 0.7)))
-    htmls = render.build_slides(ig_events, cfg, P["work"])
-    jpgs = capture.capture_slides(htmls, P["cards"])
-    cap = render.build_caption(ig_events, cfg)
-    with open(os.path.join(P["cards"], "caption.txt"), "w", encoding="utf-8") as f:
-        f.write(cap)
+    posts = render.plan_posts(events, cfg, slot)
+    manifest = {"run": P["run"], "slot": slot, "posts": []}
+    for post in posts:
+        htmls = render.build_post_slides(post, cfg, os.path.join(P["work"], post["key"]))
+        jpgs = capture.capture_slides(htmls, os.path.join(P["cards"], post["key"]))
+        manifest["posts"].append({
+            "key": post["key"], "title": f"{post['region_full']} {post['week_label']}",
+            "images": [f"{post['key']}/{os.path.basename(j)}" for j in jpgs],
+            "caption": render.build_post_caption(post, cfg),
+        })
+        log.info("[build] post %s: %d slides, %d events", post["key"], len(jpgs), post["count"])
+    os.makedirs(P["cards"], exist_ok=True)
     with open(os.path.join(P["cards"], "manifest.json"), "w", encoding="utf-8") as f:
-        json.dump({"date": P["date"], "images": [os.path.basename(j) for j in jpgs]}, f)
+        json.dump(manifest, f, ensure_ascii=False, indent=1)
     if args.preview:
         capture.capture_page(idx, os.path.join(P["work"], "mobile-preview.jpg"))
-    log.info("[build] %d slides, caption %d chars", len(jpgs), len(cap))
+    log.info("[build] slot=%s posts=%d", slot, len(manifest["posts"]))
 
 
 def cmd_publish(cfg, args):
     from concertbot.instagram import Instagram, wait_public
 
-    P = paths(cfg)
+    slot = resolve_slot(args)
+    P = paths(cfg, slot)
     posted = json.load(open(P["posted"], encoding="utf-8")) if os.path.exists(P["posted"]) else {}
-    if P["date"] in posted and not args.force:
-        log.info("[publish] already posted today: %s", posted[P["date"]])
-        return
+    done = posted.setdefault(P["run"], {})
     man = json.load(open(os.path.join(P["cards"], "manifest.json"), encoding="utf-8"))
-    caption = open(os.path.join(P["cards"], "caption.txt"), encoding="utf-8").read()
-    base = cfg["site_url"].rstrip("/") + f"/cards/{P['date']}/"
-    urls = [base + n for n in man["images"]]
+    base = cfg["site_url"].rstrip("/") + "/" + P["cards_rel"] + "/"
+    todo = [p for p in man["posts"] if args.force or p["key"] not in done]
+    if not todo:
+        log.info("[publish] nothing to post for %s", P["run"])
+        return
     if args.dry_run:
-        log.info("[publish] dry-run: %d images\n%s\n---\n%s", len(urls), "\n".join(urls), caption)
+        for p in todo:
+            log.info("[publish] dry-run %s: %d images\n%s\n---\n%s", p["key"], len(p["images"]),
+                     "\n".join(base + i for i in p["images"]), p["caption"])
         return
     sec = secrets()
     if not (sec["IG_ACCESS_TOKEN"] and sec["IG_USER_ID"]):
-        sys.exit("IG_ACCESS_TOKEN / IG_USER_ID 가 없습니다. README 의 인스타그램 설정을 확인하세요.")
+        sys.exit("IG_ACCESS_TOKEN / IG_USER_ID 가 없습니다.")
     icfg = cfg.get("instagram", {})
     ig = Instagram(sec["IG_ACCESS_TOKEN"], sec["IG_USER_ID"], icfg.get("api_host", "graph.facebook.com"),
                    icfg.get("api_version", "v26.0"))
     log.info("[publish] quota: %s", ig.publishing_quota())
-    wait_public(urls)
-    media_id = ig.publish_carousel(urls, caption)
-    posted[P["date"]] = {"media_id": media_id, "permalink": ig.permalink(media_id),
-                         "at": now_kst().isoformat(timespec="seconds"), "images": len(urls)}
     os.makedirs(os.path.dirname(P["posted"]), exist_ok=True)
-    json.dump(posted, open(P["posted"], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
-    log.info("[publish] done %s", posted[P["date"]])
+    failed = 0
+    for p in todo:
+        urls = [base + i for i in p["images"]]
+        try:
+            wait_public(urls)
+            media_id = ig.publish_carousel(urls, p["caption"])
+        except Exception as e:  # noqa: BLE001
+            failed += 1
+            log.error("[publish] %s failed: %s", p["key"], e)
+            continue
+        done[p["key"]] = {"media_id": media_id, "permalink": ig.permalink(media_id),
+                          "at": now_kst().isoformat(timespec="seconds"), "images": len(urls)}
+        json.dump(posted, open(P["posted"], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+        log.info("[publish] %s done %s", p["key"], done[p["key"]])
+    if failed:
+        sys.exit(f"{failed} post(s) failed")
 
 
 def cmd_x_login(cfg, args):
@@ -143,7 +171,9 @@ def main():
     ap.add_argument("command", choices=["collect", "build", "publish", "all", "x-login"])
     ap.add_argument("--sample", action="store_true", help="샘플 데이터로 수집 단계 대체")
     ap.add_argument("--dry-run", action="store_true", help="인스타 업로드 생략")
-    ap.add_argument("--force", action="store_true", help="오늘 이미 게시했어도 다시 게시")
+    ap.add_argument("--force", action="store_true", help="이미 게시한 게시물도 다시 게시")
+    ap.add_argument("--slot", choices=["auto", "noon", "evening"], default="auto",
+                    help="noon: 이번 주, evening: 다음 주·다다음 주 (auto: 15시 전이면 noon)")
     ap.add_argument("--preview", action="store_true", help="모바일 페이지 미리보기 캡처")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args()

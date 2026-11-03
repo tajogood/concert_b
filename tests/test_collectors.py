@@ -32,6 +32,7 @@ class FakeSession:
 
 
 def test_kopis(monkeypatch, tmp_path):
+    monkeypatch.setattr(kopis.time, "sleep", lambda *_: None)
     monkeypatch.setattr(kopis, "CACHE", str(tmp_path / "kopis_detail.json"))
     monkeypatch.setattr(kopis, "FAC_CACHE", str(tmp_path / "kopis_facility.json"))
     FAC = '<?xml version="1.0" encoding="UTF-8"?><dbs><db><fcltynm>올림픽공원</fcltynm><adres>서울특별시 송파구 올림픽로 424</adres></db></dbs>'

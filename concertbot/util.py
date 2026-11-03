@@ -151,3 +151,23 @@ def kdate(iso: str, with_wd: bool = True) -> str:
     except Exception:
         return iso
     return f"{d.month}.{d.day}" + (f"({WEEKDAYS[d.weekday()]})" if with_wd else "")
+
+
+# ---------------------------------------------------------------- 주차
+REGION_SLUG = {"서울": "seoul", "부산": "busan", "대구": "daegu", "인천": "incheon", "광주": "gwangju", "대전": "daejeon",
+               "울산": "ulsan", "세종": "sejong", "경기": "gyeonggi", "강원": "gangwon", "충북": "chungbuk", "충남": "chungnam",
+               "전북": "jeonbuk", "전남": "jeonnam", "경북": "gyeongbuk", "경남": "gyeongnam", "제주": "jeju"}
+ORDINALS = ["첫째", "둘째", "셋째", "넷째", "다섯째"]
+REGION_FULL = {"서울": "서울시", "부산": "부산시", "대구": "대구시", "인천": "인천시", "광주": "광주시", "대전": "대전시",
+               "울산": "울산시", "세종": "세종시", "경기": "경기도", "강원": "강원도", "충북": "충청북도", "충남": "충청남도",
+               "전북": "전북", "전남": "전라남도", "경북": "경상북도", "경남": "경상남도", "제주": "제주도"}
+
+
+def week_info(d: date) -> dict:
+    """월~일 한 주. 목요일이 속한 달의 몇째 주인지로 '11월 첫째 주'를 정한다."""
+    mon = d - timedelta(days=d.weekday())
+    thu = mon + timedelta(days=3)
+    n = (thu.day - 1) // 7 + 1
+    return {"monday": mon, "sunday": mon + timedelta(days=6), "year": thu.year, "month": thu.month, "n": n,
+            "key": f"{thu.year}-{thu.month:02d}-w{n}", "label": f"{thu.month}월 {n}주차",
+            "label_long": f"{thu.month}월 {ORDINALS[n - 1]} 주"}

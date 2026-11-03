@@ -50,13 +50,12 @@ h1 .d { color: var(--spot); }
 
 .dates { display: flex; gap: 6px; overflow-x: auto; margin: 8px -16px 0; padding: 0 16px 2px; scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding-inline: 16px; }
 .dates::-webkit-scrollbar { display: none; }
-.dt { flex: none; min-width: 52px; height: 52px; border-radius: 12px; border: 0; background: transparent; color: var(--stock);
+.dt { flex: none; min-width: 64px; height: 52px; border-radius: 12px; border: 0; background: transparent; color: var(--stock);
   font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 8px; scroll-snap-align: start; }
 .dt b { font-family: "BlackHan"; font-weight: 400; font-size: 17px; line-height: 1.1; }
 .dt small { font-size: 11px; color: var(--dim); font-weight: 600; margin-top: 2px; }
-.dt.sat small { color: #8FB4FF; } .dt.sun small { color: #FF8FB8; }
 .dt.word b { font-family: "Pretendard"; font-weight: 800; font-size: 14px; }
-.dt.month { min-width: auto; padding: 0 4px 0 10px; color: var(--spot); font-family: "BlackHan"; font-size: 14px; cursor: default; }
+.dt.month { min-width: auto; padding: 0 2px 0 10px; color: var(--spot); font-family: "BlackHan"; font-size: 15px; cursor: default; }
 .dt[aria-pressed="true"] { background: var(--spot); color: var(--ink); }
 .dt[aria-pressed="true"] small { color: var(--ink); }
 .dt:disabled { opacity: .3; cursor: default; }
@@ -66,39 +65,35 @@ main { max-width: 640px; margin: 0 auto; padding: 0 16px 40px; }
 .day h2 { font-family: "BlackHan"; font-weight: 400; font-size: 22px; display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
 .day h2 span { font-family: "Pretendard"; font-size: 14px; font-weight: 500; color: var(--dim); }
 .day h2.today { color: var(--spot); }
+.wk { margin-top: 36px; padding-top: 18px; border-top: 1px solid var(--night-2); font-family: "BlackHan"; font-weight: 400; font-size: 28px; color: var(--spot); }
+.wk:first-child { margin-top: 18px; border-top: 0; padding-top: 0; }
+.wk span { font-family: "Pretendard"; font-size: 14px; font-weight: 500; color: var(--dim); margin-left: 8px; }
 
-.stub { display: flex; background: var(--stock); color: var(--ink); border-radius: 16px; margin-bottom: 10px; cursor: pointer; width: 100%;
-  text-align: left; border: 0; font: inherit;
+.stub { position: relative; display: flex; background: var(--stock); color: var(--ink); border-radius: 16px; margin-bottom: 10px;
   -webkit-mask: radial-gradient(circle 9px at 76px 0, transparent 8.5px, #000 9px) top / 100% 51% no-repeat,
                 radial-gradient(circle 9px at 76px 100%, transparent 8.5px, #000 9px) bottom / 100% 51% no-repeat; }
+.stub:active { background: var(--stock-edge); }
 .stub .date { width: 76px; flex: none; border-right: 2px dashed var(--stock-edge); display: flex; flex-direction: column;
   align-items: center; justify-content: center; padding: 10px 4px; }
 .stub .md { font-family: "BlackHan"; font-size: 22px; line-height: 1; }
 .stub .wd { font-size: 12px; font-weight: 700; color: var(--ink-soft); margin-top: 4px; }
-.stub .body { flex: 1; min-width: 0; padding: 12px 14px 12px 14px; }
-.stub .t { word-break: keep-all; font-weight: 800; font-size: 16px; line-height: 1.3; letter-spacing: -.2px; }
-.stub .w { font-size: 13px; color: var(--ink-soft); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stub .rn { font-size: 11px; font-weight: 600; color: var(--ink-soft); margin-top: 2px; }
+.stub .body { flex: 1; min-width: 0; padding: 12px 14px 22px; }
+.stub .t { display: block; word-break: keep-all; font-weight: 800; font-size: 16px; line-height: 1.3; letter-spacing: -.2px; text-decoration: none; color: inherit; }
+.stub .t::after { content: ""; position: absolute; inset: 0; }
+.stub .w, .stub .m { font-size: 13px; color: var(--ink-soft); margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stub .p { display: flex; gap: 6px; align-items: center; margin-top: 6px; font-size: 13px; font-weight: 700; min-width: 0; }
 .stub .p span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .rg { flex: none; background: var(--ink); color: var(--stock); border-radius: 6px; padding: 1px 7px; font-size: 12px; }
 .nw { display: inline-block; background: var(--glow); color: #fff; font-family: "BlackHan"; font-size: 11px; border-radius: 5px; padding: 1px 6px 2px; margin-right: 6px; vertical-align: 2px; }
 .tk { color: #B3126A; font-size: 12px; font-weight: 700; margin-top: 4px; }
-.thumb { width: 62px; flex: none; margin: 8px 8px 8px 0; border-radius: 10px; background: var(--stock-edge) center/cover no-repeat; }
-
-.detail { background: var(--night-2); border-radius: 16px; margin: -4px 0 12px; padding: 14px 16px; font-size: 14px; display: none; }
-.detail.open { display: block; }
-.detail dl { display: grid; grid-template-columns: 64px 1fr; gap: 6px 10px; }
-.detail dt { color: var(--dim); }
-.detail dd { word-break: keep-all; }
-.links { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.links a { background: var(--spot); color: var(--ink); text-decoration: none; font-weight: 700; padding: 8px 14px; border-radius: 10px; font-size: 14px; }
-.links a.src { background: transparent; color: var(--stock); border: 1.5px solid var(--dim); font-weight: 500; }
-.conf { margin-top: 10px; color: var(--dim); font-size: 12px; }
+.thumb { width: 62px; flex: none; margin: 8px 8px 24px 0; border-radius: 10px; background: var(--stock-edge) center/cover no-repeat; }
+.src { position: absolute; right: 10px; bottom: 6px; z-index: 1; font-size: 10px; font-weight: 600; color: var(--ink-soft); text-decoration: none; opacity: .75; }
+.src.warn { color: #B3126A; opacity: 1; }
 
 .empty { text-align: center; color: var(--dim); padding: 60px 0; }
 footer { max-width: 640px; margin: 0 auto; padding: 20px 16px 48px; color: var(--dim); font-size: 12px; line-height: 1.7; }
 footer .co { margin-top: 10px; }
-@media (prefers-reduced-motion: no-preference) { .detail.open { animation: drop .18s ease-out; } @keyframes drop { from { opacity: 0; transform: translateY(-4px); } } }
 </style>
 </head>
 <body>
@@ -116,7 +111,7 @@ footer .co { margin-top: 10px; }
     <select class="sel" id="city" aria-label="시·군·구" disabled></select>
     <select class="sel" id="genre" aria-label="장르"></select>
   </div>
-  <div class="dates" id="dates" role="toolbar" aria-label="날짜"></div>
+  <div class="dates" id="dates" role="toolbar" aria-label="주차"></div>
 </div></div>
 
 <main id="list" aria-live="polite"></main>
@@ -132,7 +127,7 @@ const TODAY = "{{ today_iso }}";
 const RANGE_END = "{{ range_end_iso }}";
 const REGIONS = {{ regions|tojson }};
 const WD = "일월화수목금토";
-const st = { q: "", region: "", city: "", genre: "", newOnly: false, from: "", to: "", dateKey: "all" };
+const st = { q: "", region: "", city: "", genre: "", newOnly: false, from: "", to: "", dateKey: "" };
 const $list = document.getElementById("list");
 const $region = document.getElementById("region");
 const $city = document.getElementById("city");
@@ -149,12 +144,14 @@ const wd = s => WD[D(s).getDay()];
 const safeUrl = u => /^https?:\/\//.test(u || "") ? u : "";
 const endOf = e => e.end_date || e.start_date;
 
-function weekend() {
-  const dow = D(TODAY).getDay();
-  if (dow === 0) return [TODAY, TODAY];
-  const sat = addDays(TODAY, 6 - dow);
-  return [dow === 6 ? TODAY : sat, addDays(sat, 1)];
+// 월~일 한 주. 목요일이 속한 달의 몇째 주인지로 '11월 1주차'를 정한다.
+function weekOf(s) {
+  const d = D(s), dow = (d.getDay() + 6) % 7;
+  const mon = addDays(s, -dow), thu = D(addDays(mon, 3));
+  const m = thu.getMonth() + 1, n = Math.floor((thu.getDate() - 1) / 7) + 1;
+  return { key: mon, mon, sun: addDays(mon, 6), m, n, label: `${m}월 ${n}주차` };
 }
+const THIS_WEEK = weekOf(TODAY);
 
 // 날짜 외 조건
 function baseMatch(e) {
@@ -203,27 +200,20 @@ function fillGenre() {
   $genre.classList.toggle("on", !!st.genre);
 }
 
-// ---------------- 날짜 띠
+// ---------------- 주차 띠
 function fillDates() {
   const pool = EVENTS.filter(e => !e.long_run && baseMatch(e));
-  const per = {};
-  for (const e of pool) {
-    let d = e.start_date < TODAY ? TODAY : e.start_date;
-    const last = endOf(e) < RANGE_END ? endOf(e) : RANGE_END;
-    for (let n = 0; d <= last && n < 40; n++, d = addDays(d, 1)) per[d] = (per[d] || 0) + 1;
-  }
-  const [ws, we] = weekend();
-  const btn = (key, label, sub, cls = "", dis = false) =>
-    `<button class="dt ${cls}" data-key="${key}" aria-pressed="${st.dateKey === key}"${dis ? " disabled" : ""}><b>${label}</b>${sub ? `<small>${sub}</small>` : ""}</button>`;
+  const weeks = [];
+  for (let w = THIS_WEEK; w.mon <= RANGE_END; w = weekOf(addDays(w.mon, 7))) weeks.push(w);
+  const cnt = w => pool.filter(e => overlaps(e, w.mon < TODAY ? TODAY : w.mon, w.sun)).length;
   let html = `<button class="dt word new" id="newonly" aria-pressed="${st.newOnly}"><b>새로 뜬</b><small>공연만</small></button>`
-    + btn("all", "전체", "", "word") + btn("weekend", "주말", `${md(ws)}~`, "word");
+    + `<button class="dt word" data-key="all" aria-pressed="${st.dateKey === "all"}"><b>전체</b><small>${pool.length}</small></button>`;
   let month = -1;
-  for (let d = TODAY; d <= RANGE_END; d = addDays(d, 1)) {
-    const m = D(d).getMonth();
-    if (m !== month) { html += `<span class="dt month">${m + 1}월</span>`; month = m; }
-    const dow = D(d).getDay(), n = per[d] || 0;
-    const label = d === TODAY ? "오늘" : String(D(d).getDate());
-    html += btn(d, label, `${WD[dow]} ${n}`, (dow === 6 ? "sat" : dow === 0 ? "sun" : "") + (d === TODAY ? " word" : ""), !n);
+  for (const w of weeks) {
+    if (w.m !== month) { html += `<span class="dt month">${w.m}월</span>`; month = w.m; }
+    const n = cnt(w);
+    const sub = w.key === THIS_WEEK.key ? `이번 주 ${n}` : `${md(w.mon)}~ ${n}`;
+    html += `<button class="dt" data-key="${w.key}" aria-pressed="${st.dateKey === w.key}"${n ? "" : " disabled"}><b>${w.n}주차</b><small>${sub}</small></button>`;
   }
   const x = $dates.scrollLeft;
   $dates.innerHTML = html;
@@ -231,47 +221,44 @@ function fillDates() {
 }
 function setDate(key) {
   st.dateKey = key;
-  if (key === "all") { st.from = ""; st.to = ""; }
-  else if (key === "weekend") { [st.from, st.to] = weekend(); }
-  else { st.from = key; st.to = key; }
+  if (key === "all") { st.from = ""; st.to = ""; return; }
+  const w = weekOf(key);
+  st.from = w.mon < TODAY ? TODAY : w.mon; st.to = w.sun;
 }
 
 // ---------------- 목록
-function row(e, i, anchor) {
+function row(e, anchor) {
   const day = anchor || (e.start_date < TODAY ? TODAY : e.start_date);
-  const links = e.ticket_links.filter(l => safeUrl(l.url)).map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.name || "예매")}</a>`).join("");
-  const srcs = e.sources.filter(s => safeUrl(s.url)).slice(0, 3).map(s => `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a>`).join("");
+  const ticket = e.ticket_links.find(l => safeUrl(l.url));
+  const src = e.sources.find(s => safeUrl(s.url)) || { label: "", url: "" };
+  const href = ticket ? ticket.url : src.url;
   const place = [e.region, e.city].filter(Boolean).join(" ");
+  const multi = endOf(e) !== e.start_date;
   return `
-  <button class="stub" aria-expanded="false" aria-controls="d${i}">
+  <article class="stub">
     <div class="date">${e.long_run
       ? `<div class="md">${md(endOf(e))}</div><div class="wd">까지</div>`
-      : `<div class="md">${md(day)}</div><div class="wd">${wd(day)}</div>`}</div>
+      : `<div class="md">${md(day)}</div><div class="wd">${wd(day)}</div>${multi ? `<div class="rn">~${md(endOf(e))}</div>` : ""}`}</div>
     <div class="body">
-      <div class="t">${e.is_new ? '<span class="nw">NEW</span>' : ""}${esc(e.title)}</div>
+      ${href ? `<a class="t" href="${esc(href)}" target="_blank" rel="noopener">` : `<div class="t">`}${e.is_new ? '<span class="nw">NEW</span>' : ""}${esc(e.title)}${href ? "</a>" : "</div>"}
       ${e.artists.length ? `<div class="w">${esc(e.artists.join(", "))}</div>` : ""}
       <div class="p">${place ? `<span class="rg">${esc(place)}</span>` : ""}<span>${esc(e.venue || "장소 미정")}</span></div>
+      ${e.times ? `<div class="m">${esc(e.times)}</div>` : ""}
+      ${e.price ? `<div class="m">${esc(e.price)}</div>` : ""}
       ${e.ticket_open ? `<div class="tk">티켓 오픈 ${esc(e.ticket_open)}</div>` : ""}
     </div>
     ${safeUrl(e.poster) ? `<div class="thumb" style="background-image:url('${esc(e.poster)}')"></div>` : ""}
-  </button>
-  <div class="detail" id="d${i}">
-    <dl>
-      <dt>기간</dt><dd>${md(e.start_date)}(${wd(e.start_date)})${endOf(e) !== e.start_date ? ` ~ ${md(endOf(e))}(${wd(endOf(e))})` : ""}</dd>
-      ${e.times ? `<dt>시간</dt><dd>${esc(e.times)}</dd>` : ""}
-      ${e.price ? `<dt>가격</dt><dd>${esc(e.price)}</dd>` : ""}
-      <dt>장르</dt><dd>${esc(e.genre)}</dd>
-    </dl>
-    <div class="links">${links}${srcs}</div>
-    ${e.confidence < 0.9 ? '<div class="conf">뉴스·SNS에서만 확인된 공연이에요. 예매 전 공식 공지를 확인하세요.</div>' : ""}
-  </div>`;
+    ${e.confidence < 0.9
+      ? `<a class="src warn" href="${esc(src.url)}" target="_blank" rel="noopener">${esc(src.label)} · 확인 필요</a>`
+      : src.url ? `<a class="src" href="${esc(src.url)}" target="_blank" rel="noopener">${esc(src.label)}</a>` : ""}
+  </article>`;
 }
 
 function renderList() {
   const a = st.from || TODAY, b = st.to || "9999-12-31";
   const items = EVENTS.filter(e => baseMatch(e) && overlaps(e, a, b));
   if (!items.length) {
-    $list.innerHTML = `<p class="empty">조건에 맞는 공연이 없어요.<br>다른 날짜나 지역을 골라 보세요.</p>`;
+    $list.innerHTML = `<p class="empty">조건에 맞는 공연이 없어요.<br>다른 주차나 지역을 골라 보세요.</p>`;
     return;
   }
   const groups = new Map();
@@ -281,16 +268,25 @@ function renderList() {
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(e);
   }
-  let html = "", i = 0;
+  const all = st.dateKey === "all";
+  let html = "", lastWeek = "";
   for (const [k, evs] of [...groups].sort()) {
+    if (all) {
+      const w = weekOf(k);
+      if (w.key !== lastWeek) {
+        const n = [...groups].filter(([d]) => d >= w.mon && d <= w.sun).reduce((t, [, x]) => t + x.length, 0);
+        html += `<h2 class="wk">${w.label}<span>${md(w.mon < TODAY ? TODAY : w.mon)} ~ ${md(w.sun)}, ${n}개</span></h2>`;
+        lastWeek = w.key;
+      }
+    }
     const label = k === TODAY ? "오늘" : `${md(k)} ${wd(k)}요일`;
     html += `<section class="day"><h2 class="${k === TODAY ? "today" : ""}">${label}<span>${evs.length}개</span></h2>`;
-    for (const e of evs) html += row(e, i++, k);
+    for (const e of evs) html += row(e, k);
     html += `</section>`;
   }
   if (longRuns.length) {
-    html += `<section class="day"><h2>상설·장기 공연<span>${longRuns.length}개</span></h2>`;
-    for (const e of longRuns.sort((x, y) => endOf(x).localeCompare(endOf(y)))) html += row(e, i++);
+    html += `<h2 class="wk">상설·장기 공연<span>${longRuns.length}개</span></h2><section class="day">`;
+    for (const e of longRuns.sort((x, y) => endOf(x).localeCompare(endOf(y)))) html += row(e);
     html += `</section>`;
   }
   $list.innerHTML = html;
@@ -298,22 +294,17 @@ function renderList() {
 
 function render() { fillRegion(); fillCity(); fillGenre(); fillDates(); renderList(); }
 
-$list.addEventListener("click", ev => {
-  const b = ev.target.closest(".stub"); if (!b) return;
-  const d = document.getElementById(b.getAttribute("aria-controls"));
-  const open = d.classList.toggle("open");
-  b.setAttribute("aria-expanded", open);
-});
 $dates.addEventListener("click", ev => {
   if (ev.target.closest("#newonly")) { st.newOnly = !st.newOnly; render(); return; }
   const b = ev.target.closest(".dt[data-key]"); if (!b || b.disabled) return;
-  setDate(st.dateKey === b.dataset.key ? "all" : b.dataset.key);
+  setDate(b.dataset.key);
   fillDates(); renderList(); window.scrollTo({ top: document.querySelector(".controls").offsetTop, behavior: "smooth" });
 });
 $region.addEventListener("change", () => { st.region = $region.value; st.city = ""; render(); });
 $city.addEventListener("change", () => { st.city = $city.value; render(); });
 $genre.addEventListener("change", () => { st.genre = $genre.value; render(); });
 document.querySelector(".search").addEventListener("input", e => { st.q = e.target.value.trim().toLowerCase(); fillDates(); renderList(); });
+setDate(THIS_WEEK.key);
 render();
 </script>
 </body>
