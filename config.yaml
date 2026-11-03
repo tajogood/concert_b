@@ -20,7 +20,7 @@ sources:
     enabled: true
     days_ahead: 90
     genres: [CCCD, CCCA, CCCC]   # 대중음악, 클래식, 국악 (뮤지컬 추가: GGGA)
-    max_detail: 400              # 상세(출연진·가격·예매처) 조회 최대 건수
+    max_detail: 1500             # 하루에 새로 조회할 상세(출연진·가격·예매처) 최대 건수. 조회 결과는 캐시
 
   seoul:                     # 서울시 문화행사
     enabled: true
@@ -105,4 +105,5 @@ instagram:
   per_slide_new: 3
   per_slide_week: 3
   show_posters: true
+  genre_priority: [대중음악, 클래식, 국악]   # 이번 주 슬라이드에서 먼저 보여줄 장르 순서
   hashtags: [콘서트, 공연정보, 콘서트일정, 공연일정, 오늘의공연, 티켓팅]

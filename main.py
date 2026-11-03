@@ -67,7 +67,7 @@ def cmd_collect(cfg, args):
         extracted = extract_events(posts, cfg, sec)
         incoming = structured + extracted
         report["extract"] = f"posts={len(posts)} events={len(extracted)}"
-    events, added = store.merge(existing, incoming)
+    events, added = store.merge(existing, incoming, bootstrap=not existing and not args.sample)
     store.save(P["events"], events)
     report.update({"total": len(events), "new": len(added), "at": now_kst().isoformat(timespec="seconds")})
     with open(P["report"], "w", encoding="utf-8") as f:

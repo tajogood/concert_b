@@ -14,7 +14,7 @@ def capture_slides(html_paths: list[str], out_dir: str, quality: int = 92) -> li
         b = p.chromium.launch()
         page = b.new_page(viewport={"width": 1080, "height": 1350}, device_scale_factor=1)
         for hp in html_paths:
-            page.goto("file://" + os.path.abspath(hp), wait_until="load", timeout=60000)
+            page.goto("file://" + os.path.abspath(hp), wait_until="domcontentloaded", timeout=60000)
             try:
                 page.wait_for_load_state("networkidle", timeout=15000)  # 포스터 이미지
             except Exception:  # noqa: BLE001
@@ -35,7 +35,7 @@ def capture_page(index_html: str, out_path: str):
     with sync_playwright() as p:
         b = p.chromium.launch()
         page = b.new_page(viewport={"width": 390, "height": 844}, device_scale_factor=3, is_mobile=True, has_touch=True)
-        page.goto("file://" + os.path.abspath(index_html), wait_until="load")
+        page.goto("file://" + os.path.abspath(index_html), wait_until="domcontentloaded")
         try:
             page.wait_for_load_state("networkidle", timeout=15000)
         except Exception:  # noqa: BLE001

@@ -40,11 +40,23 @@ def _view(e: Event, today: str) -> dict:
     }
 
 
+LONG_RUN_DAYS = 7
+
+
+def is_long_run(e: Event) -> bool:
+    """상설·오픈런처럼 기간이 긴 공연. 날짜별 목록과 캐러셀에서는 따로 다룬다."""
+    try:
+        return (date.fromisoformat(e.end_date or e.start_date) - date.fromisoformat(e.start_date)).days > LONG_RUN_DAYS
+    except ValueError:
+        return False
+
+
 def summarize(events: list[Event]):
     today = today_kst().isoformat()
     week_end = (today_kst() + timedelta(days=6)).isoformat()
-    new = [e for e in events if _is_new(e, today)]
-    week = [e for e in events if e.start_date <= week_end and (e.end_date or e.start_date) >= today]
+    short = [e for e in events if not is_long_run(e)]
+    new = [e for e in short if _is_new(e, today)]
+    week = [e for e in short if e.start_date <= week_end and (e.end_date or e.start_date) >= today]
     return today, new, week
 
 
@@ -57,11 +69,12 @@ def build_site(events: list[Event], cfg: dict, out_dir: str) -> str:
     for e in sorted(events, key=lambda x: (max(x.start_date, today), x.region, x.title)):
         d = e.to_dict()
         d["is_new"] = _is_new(e, today)
+        d["long_run"] = is_long_run(e)
         d["sources"] = [{"label": SOURCE_LABELS.get(s.name.split(":")[0], s.name.split(":")[-1] or "출처"), "url": s.url}
                         for s in e.sources]
         rows.append({k: d[k] for k in ("title", "artists", "start_date", "end_date", "venue", "region", "genre",
                                        "times", "price", "poster", "ticket_links", "ticket_open", "sources",
-                                       "confidence", "is_new")})
+                                       "confidence", "is_new", "long_run")})
     regions = [r for r in REGION_ORDER if any(e.region == r for e in events)]
     html = env.get_template("index.html.j2").render(
         brand=cfg["brand"], base_css=_base_css("fonts"), today_md=kdate(today, False), today_iso=today,
@@ -97,17 +110,29 @@ def plan_slides(events: list[Event], cfg: dict) -> list[dict]:
         slides.append({"kind": "list", "is_new": True, "heading": "새로 뜬 공연",
                        "sub": "오늘 처음 소식이 올라온 공연", "events": new_v[i:i + per_new]})
 
-    # 이번 주: 날짜순으로 채우되 슬라이드 제목은 그 슬라이드의 날짜 범위
+    # 이번 주: 하루에 한 장씩, 그날 공연 중 우선순위 높은 순으로 per_day 개.
+    # 날짜가 슬라이드 수보다 많으면 앞쪽 날짜부터 채운다.
     n_shown = sum(len(s["events"]) for s in slides)
     shown = {e.id for e in by_start(new)[:n_shown]}
-    week_v = [_view(e, today) for e in by_start(week) if e.id not in shown]
-    for i in range(0, len(week_v), per_day):
+    genre_rank = {g: i for i, g in enumerate(icfg.get("genre_priority", ["대중음악", "클래식", "국악"]))}
+
+    def score(e):
+        return (genre_rank.get(e.genre, 9), -bool(e.ticket_open), -bool(e.artists), -bool(e.ticket_links), e.title)
+
+    by_day = {}
+    for e in week:
+        if e.id in shown:
+            continue
+        by_day.setdefault(max(e.start_date, today), []).append(e)
+    for day in sorted(by_day):
         if len(slides) >= content_budget:
             break
-        chunk = week_v[i:i + per_day]
-        a, b = chunk[0]["md"], chunk[-1]["md"]
-        slides.append({"kind": "list", "is_new": False, "heading": "이번 주 공연",
-                       "sub": f"{a} ~ {b}" if a != b else f"{a} {chunk[0]['wd']}", "events": chunk})
+        evs = sorted(by_day[day], key=score)
+        chunk = [_view(e, today) for e in evs[:per_day]]
+        more = len(evs) - len(chunk)
+        sub = f"{chunk[0]['md']} {chunk[0]['wd']}" + (f", 이 밖에 {more}개 더" if more > 0 else "")
+        slides.append({"kind": "list", "is_new": False, "heading": "오늘 공연" if day == today else "이번 주 공연",
+                       "sub": sub, "events": chunk})
     return [{"kind": "cover"}] + slides + [{"kind": "outro"}]
 
 
@@ -139,7 +164,7 @@ def build_caption(events: list[Event], cfg: dict) -> str:
     if new:
         lines.append(f"새로 뜬 공연 {len(new)}개")
         for e in sorted(new, key=lambda x: x.start_date)[:8]:
-            lines.append(f"- {e.title} | {kdate(e.start_date)} {e.region} {e.venue}".rstrip())
+            lines.append(f"- {e.title} | {kdate(max(e.start_date, today))} {e.region} {e.venue}".rstrip())
         lines.append("")
     if week:
         lines.append(f"7일 안에 열리는 공연 {len(week)}개")

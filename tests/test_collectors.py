@@ -31,7 +31,8 @@ class FakeSession:
         raise AssertionError(url)
 
 
-def test_kopis(monkeypatch):
+def test_kopis(monkeypatch, tmp_path):
+    monkeypatch.setattr(kopis, "CACHE", str(tmp_path / "kopis_detail.json"))
     monkeypatch.setattr(kopis, "session", lambda: FakeSession({"pblprfr/PF": DETAIL, "pblprfr": LIST}))
     ev, _ = kopis.collect({"genres": ["CCCD"]}, {"KOPIS_API_KEY": "k"}, {})
     e = ev[0]

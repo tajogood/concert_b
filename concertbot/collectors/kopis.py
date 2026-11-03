@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import os
 import time
 import xml.etree.ElementTree as ET
 from datetime import timedelta
@@ -9,6 +11,7 @@ from ..util import log, normalize_region, now_kst, parse_ymd, session, today_kst
 from .base import need
 
 BASE = "https://kopis.or.kr/openApi/restful"
+CACHE = os.path.join("data", "kopis_detail.json")
 GENRE_NAMES = {"CCCD": "대중음악", "CCCA": "클래식", "CCCC": "국악", "GGGA": "뮤지컬"}
 
 
@@ -45,8 +48,13 @@ def collect(cfg, secrets, config):
             page += 1
             time.sleep(0.2)
 
+    cache = {}
+    if os.path.exists(CACHE):
+        with open(CACHE, encoding="utf-8") as f:
+            cache = json.load(f)
+    fetched_detail = 0
     events = []
-    for i, (g, db) in enumerate(items):
+    for g, db in items:
         mt20id = _txt(db, "mt20id")
         ev = Event(
             title=_txt(db, "prfnm"),
@@ -60,33 +68,51 @@ def collect(cfg, secrets, config):
             sources=[Source("kopis", f"https://www.kopis.or.kr/por/db/pblprfr/pblprfrView.do?menuId=MNU_00020&mt20Id={mt20id}", fetched)],
             confidence=1.0,
         )
-        if i < max_detail:
+        if mt20id not in cache and fetched_detail < max_detail:
             try:
-                _enrich_detail(s, key, mt20id, ev)
+                cache[mt20id] = _fetch_detail(s, key, mt20id)
             except Exception as e:  # noqa: BLE001
                 log.debug("kopis detail %s failed: %s", mt20id, e)
+            fetched_detail += 1
             time.sleep(0.1)
+        if mt20id in cache:
+            _apply_detail(cache[mt20id], ev)
         if ev.start_date:
             events.append(ev)
+    live = {_txt(db, "mt20id") for _, db in items}
+    cache = {k: v for k, v in cache.items() if k in live}
+    os.makedirs(os.path.dirname(CACHE), exist_ok=True)
+    with open(CACHE, "w", encoding="utf-8") as f:
+        json.dump(cache, f, ensure_ascii=False)
+    log.info("[kopis] detail fetched=%d cached=%d", fetched_detail, len(cache))
     return events, []
 
 
-def _enrich_detail(s, key, mt20id, ev: Event):
+def _fetch_detail(s, key, mt20id) -> dict:
     r = s.get(f"{BASE}/pblprfr/{mt20id}", params={"service": key}, timeout=30)
     r.raise_for_status()
     db = ET.fromstring(r.content).find("db")
     if db is None:
-        return
+        return {}
     cast = _txt(db, "prfcast").replace(" 등", "")
-    ev.artists = [c.strip() for c in cast.split(",") if c.strip()][:6]
-    ev.price = _txt(db, "pcseguidance")
-    ev.times = _txt(db, "dtguidance")
-    area = _txt(db, "area")
-    if area and not ev.region:
-        ev.region = normalize_region(area)
     links = []
     for rel in db.findall("relates/relate"):
         name, url = _txt(rel, "relatenm"), _txt(rel, "relateurl")
         if url:
             links.append({"name": name or "예매", "url": url})
-    ev.ticket_links = links[:4]
+    return {
+        "artists": [c.strip() for c in cast.split(",") if c.strip()][:6],
+        "price": _txt(db, "pcseguidance"),
+        "times": _txt(db, "dtguidance"),
+        "area": _txt(db, "area"),
+        "links": links[:4],
+    }
+
+
+def _apply_detail(d: dict, ev: Event):
+    ev.artists = d.get("artists", [])
+    ev.price = d.get("price", "")
+    ev.times = d.get("times", "")
+    if d.get("area") and not ev.region:
+        ev.region = normalize_region(d["area"])
+    ev.ticket_links = d.get("links", [])

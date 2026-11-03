@@ -45,3 +45,9 @@ def test_rule_extract():
 
 def test_noise_filtered():
     assert not extract.relevant(RawPost("daum_cafe", "u", "콘서트 티켓 양도합니다", "11월 8일"))
+
+
+def test_bootstrap_not_new():
+    e = Event("첫 실행 공연", d(3), venue="롤링홀", sources=[Source("kopis", "k")])
+    evs, _ = store.merge([], [e], bootstrap=True)
+    assert evs[0].first_seen[:10] < today_kst().isoformat()

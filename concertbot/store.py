@@ -71,10 +71,15 @@ def merge_into(base: Event, new: Event):
     base.updated = now_kst().isoformat(timespec="seconds")
 
 
-def merge(existing: list[Event], incoming: list[Event]) -> tuple[list[Event], list[Event]]:
+def merge(existing: list[Event], incoming: list[Event], bootstrap: bool = False) -> tuple[list[Event], list[Event]]:
     """returns (all_events, newly_added)"""
     today = today_kst().isoformat()
     stamp = now_kst().isoformat(timespec="seconds")
+    # 첫 실행: 이미 공개돼 있던 공연을 전부 '새로 뜬 공연'으로 잡지 않도록 어제 날짜로 기록
+    if bootstrap:
+        stamp_new = (now_kst() - timedelta(days=1)).isoformat(timespec="seconds")
+    else:
+        stamp_new = stamp
     # 지난 공연 정리
     events = [e for e in existing if (e.end_date or e.start_date) >= today]
     # 정형 데이터를 먼저 넣어 기준점으로 삼는다
@@ -87,7 +92,7 @@ def merge(existing: list[Event], incoming: list[Event]) -> tuple[list[Event], li
         if match:
             merge_into(match, ev)
         else:
-            ev.first_seen = ev.first_seen or stamp
+            ev.first_seen = ev.first_seen or stamp_new
             ev.updated = stamp
             events.append(ev)
             added.append(ev)

@@ -130,7 +130,9 @@ function row(e, i) {
   const srcs = e.sources.filter(s => safeUrl(s.url)).slice(0, 3).map(s => `<a class="src" href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.label)}</a>`).join("");
   return `
   <button class="stub" aria-expanded="false" aria-controls="d${i}">
-    <div class="date"><div class="md">${md(start)}</div><div class="wd">${wd(start)}</div></div>
+    <div class="date">${e.long_run
+      ? `<div class="md">${md(e.end_date)}</div><div class="wd">까지</div>`
+      : `<div class="md">${md(start)}</div><div class="wd">${wd(start)}</div>`}</div>
     <div class="body">
       <div class="t">${e.is_new ? '<span class="nw">NEW</span>' : ""}${esc(e.title)}</div>
       ${e.artists.length ? `<div class="w">${esc(e.artists.join(", "))}</div>` : ""}
@@ -158,7 +160,8 @@ function render() {
     return;
   }
   const groups = new Map();
-  for (const e of items) {
+  const longRuns = items.filter(e => e.long_run);
+  for (const e of items.filter(e => !e.long_run)) {
     const k = e.start_date < TODAY ? TODAY : e.start_date;
     if (!groups.has(k)) groups.set(k, []);
     groups.get(k).push(e);
@@ -168,6 +171,11 @@ function render() {
     const label = k === TODAY ? "오늘" : `${md(k)} ${wd(k)}요일`;
     html += `<section class="day"><h2 class="${k === TODAY ? "today" : ""}">${label}<span>${evs.length}개</span></h2>`;
     for (const e of evs) html += row(e, i++);
+    html += `</section>`;
+  }
+  if (longRuns.length) {
+    html += `<section class="day"><h2>상설·장기 공연<span>${longRuns.length}개</span></h2>`;
+    for (const e of longRuns.sort((a, b) => a.end_date.localeCompare(b.end_date))) html += row(e, i++);
     html += `</section>`;
   }
   $list.innerHTML = html;
