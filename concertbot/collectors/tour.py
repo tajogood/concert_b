@@ -78,7 +78,8 @@ def collect(cfg, secrets, config):
         if not genre:
             continue
         addr = f"{it.get('addr1', '')} {it.get('addr2', '')}".strip()
-        region = LDONG.get(str(it.get("lDongRegnCd", "")), "") or normalize_region(addr)
+        # 주소의 시·도를 우선 (원본 코드가 주소와 어긋나는 경우가 있음)
+        region = normalize_region(it.get("addr1", "")) or LDONG.get(str(it.get("lDongRegnCd", "")), "")
         link = detail.get("homepage") or f"https://korean.visitkorea.or.kr/detail/fes_detail.do?cotid={it['contentid']}"
         events.append(Event(
             title=it.get("title", "").strip(),
