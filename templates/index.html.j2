@@ -9,6 +9,8 @@
 <meta property="og:title" content="{{ brand }}">
 <meta property="og:description" content="오늘 새로 뜬 공연 {{ counts.new }}개, 7일 안에 열리는 공연 {{ counts.week }}개">
 {% if og_image %}<meta property="og:image" content="{{ og_image }}">{% endif %}
+<link rel="icon" type="image/png" href="brand/favicon.png">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
 <style>
 {{ base_css|safe }}
 html { -webkit-text-size-adjust: 100%; }
@@ -20,7 +22,7 @@ a { color: inherit; }
 header { padding: 28px 16px 8px; max-width: 640px; margin: 0 auto; position: relative; }
 header::before { content: ""; position: absolute; inset: -40px -20px auto; height: 260px; z-index: -1;
   background: radial-gradient(ellipse 60% 70% at 85% 0, rgba(255,210,63,.22), transparent 70%); }
-.brand { font-weight: 700; color: var(--dim); font-size: 14px; }
+.logo { display: block; width: 52px; height: 52px; }
 h1 { font-family: "BlackHan"; font-weight: 400; font-size: 44px; line-height: 1.05; margin-top: 10px; letter-spacing: -.5px; }
 h1 .d { color: var(--spot); }
 .sum { margin-top: 12px; color: var(--dim); font-size: 15px; }
@@ -95,12 +97,13 @@ main { max-width: 640px; margin: 0 auto; padding: 0 16px 40px; }
 
 .empty { text-align: center; color: var(--dim); padding: 60px 0; }
 footer { max-width: 640px; margin: 0 auto; padding: 20px 16px 48px; color: var(--dim); font-size: 12px; line-height: 1.7; }
+footer .co { margin-top: 10px; }
 @media (prefers-reduced-motion: no-preference) { .detail.open { animation: drop .18s ease-out; } @keyframes drop { from { opacity: 0; transform: translateY(-4px); } } }
 </style>
 </head>
 <body>
 <header>
-  <div class="brand">{{ brand }}</div>
+  <img class="logo" src="brand/logo.png" alt="{{ brand }}" width="52" height="52">
   <h1><span class="d">{{ today_md }}</span> 전국<br>공연 일정</h1>
   <p class="sum">오늘 새로 뜬 공연 <span class="nb"><b class="n">{{ counts.new }}</b>개</span>, 7일 안에 열리는 공연 <span class="nb"><b>{{ counts.week }}</b>개</span>, <span class="nb">전체 <b>{{ counts.total }}</b>개</span></p>
   <p class="range">오늘부터 {{ range_end_label }}까지 공연을 모았어요.</p>
@@ -119,8 +122,8 @@ footer { max-width: 640px; margin: 0 auto; padding: 20px 16px 48px; color: var(-
 <main id="list" aria-live="polite"></main>
 
 <footer>
-  매일 정오 업데이트 ({{ updated }} 기준). KOPIS 공연예술통합전산망, 지자체·공공데이터포털, 뉴스·카페·SNS 게시물을 모아 정리했습니다.
-  뉴스·SNS에서만 확인된 공연은 '확인 필요'로 표시되니 예매 전 공식 공지를 확인하세요.
+  {% if data_credit %}<p>{{ data_credit }}</p>{% endif %}
+  <p class="co">{{ company }}<br>문의 <a href="mailto:{{ contact_email }}">{{ contact_email }}</a></p>
 </footer>
 
 <script>

@@ -1,4 +1,7 @@
-brand: "오늘의 공연"                # 슬라이드·페이지 상단에 표시될 이름 (계정명에 맞게 변경)
+brand: "ON STAGE"                    # 서비스 이름 (로고: assets/brand/logo.png)
+company: "주식회사 라릭"
+contact_email: "david@larix.kr"
+data_credit: "출처: (재)예술경영지원센터 공연예술통합전산망(www.kopis.or.kr)"
 site_url: ""                         # 예: https://<github아이디>.github.io/concert-bot  (워크플로가 자동 주입)
 site_dir: site
 

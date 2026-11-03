@@ -65,6 +65,7 @@ def build_site(events: list[Event], cfg: dict, out_dir: str) -> str:
     today, new, week = summarize(events)
     os.makedirs(out_dir, exist_ok=True)
     shutil.copytree(os.path.join(ROOT, "assets", "fonts"), os.path.join(out_dir, "fonts"), dirs_exist_ok=True)
+    shutil.copytree(os.path.join(ROOT, "assets", "brand"), os.path.join(out_dir, "brand"), dirs_exist_ok=True)
     rows = []
     for e in sorted(events, key=lambda x: (max(x.start_date, today), x.region, x.title)):
         d = e.to_dict()
@@ -86,7 +87,8 @@ def build_site(events: list[Event], cfg: dict, out_dir: str) -> str:
         range_end_iso=range_end, genres=GENRES, range_end_label=f"{date.fromisoformat(range_end).year}년 {kdate(range_end)}",
         counts={"new": len(new), "week": len(week), "total": len(events)}, regions=regions,
         events_json=json.dumps(rows, ensure_ascii=False).replace("</", "<\\/"),
-        updated=now_kst().strftime("%Y-%m-%d %H:%M"), og_image=cfg.get("og_image", ""),
+        updated=now_kst().strftime("%Y-%m-%d %H:%M"), og_image=(cfg.get("site_url", "").rstrip("/") + "/brand/og.png") if cfg.get("site_url") else "",
+        company=cfg.get("company", ""), contact_email=cfg.get("contact_email", ""), data_credit=cfg.get("data_credit", ""),
     )
     path = os.path.join(out_dir, "index.html")
     with open(path, "w", encoding="utf-8") as f:
@@ -155,6 +157,8 @@ def build_slides(events: list[Event], cfg: dict, out_dir: str) -> list[str]:
                         today_md=kdate(today, False), today_wd=WEEKDAYS[today_kst().weekday()],
                         counts={"new": len(new), "week": len(week)},
                         site_url_short=url.replace("https://", "").rstrip("/") or "프로필 링크",
+                        logo="file://" + os.path.join(ROOT, "assets", "brand", "logo.png"),
+                        data_credit=cfg.get("data_credit", ""),
                         show_posters=cfg.get("instagram", {}).get("show_posters", True))
         p = os.path.join(out_dir, f"slide-{i:02d}.html")
         with open(p, "w", encoding="utf-8") as f:
@@ -178,7 +182,8 @@ def build_caption(events: list[Event], cfg: dict) -> str:
             lines.append(f"- {kdate(max(e.start_date, today))} {e.title} ({e.region})")
         lines.append("")
     lines.append("전체 일정과 예매 링크는 프로필 링크에서 확인하세요.")
-    lines.append("예매 전 공식 공지를 꼭 확인해 주세요.")
+    if cfg.get("data_credit"):
+        lines.append(cfg["data_credit"])
     lines.append("")
     tags = list(cfg.get("instagram", {}).get("hashtags", []))
     regions = {e.region for e in new + week if e.region}

@@ -18,8 +18,8 @@ body::before {
   pointer-events: none;
 }
 .frame { position: relative; height: 100%; padding: 84px 72px 72px; display: flex; flex-direction: column; }
-.top { display: flex; justify-content: space-between; align-items: baseline; font-size: 30px; font-weight: 500; color: var(--dim); }
-.top b { color: var(--stock); font-weight: 700; }
+.top { display: flex; justify-content: space-between; align-items: center; font-size: 30px; font-weight: 500; color: var(--dim); }
+.top img { width: 96px; height: 96px; margin: -20px 0 -20px -8px; }
 .pager { font-variant-numeric: tabular-nums; }
 
 /* ---------- cover ---------- */
@@ -70,7 +70,7 @@ body::before {
 </head>
 <body>
 <div class="frame">
-  <div class="top"><b>{{ brand }}</b><span class="pager">{{ index }}/{{ total }}</span></div>
+  <div class="top"><img src="{{ logo }}" alt="{{ brand }}"><span class="pager">{{ index }}/{{ total }}</span></div>
 
 {% if slide.kind == "cover" %}
   <div class="cover-date">{{ today_md }}</div>
@@ -107,7 +107,7 @@ body::before {
   <div class="outro-big">놓친 공연은<br><em>여기</em>에<br>다 있어요</div>
   <div class="outro-p">지역별 필터, 날짜순 전체 일정,<br>예매 링크까지 모바일 페이지에서 확인하세요.</div>
   <div class="url">{{ site_url_short }}</div>
-  <div class="note">매일 정오 업데이트. 공연 정보는 KOPIS·지자체 공공데이터와 뉴스·SNS를 모아 정리했으며, 예매 전 공식 공지를 꼭 확인하세요.</div>
+  {% if data_credit %}<div class="note">{{ data_credit }}</div>{% endif %}
 {% endif %}
 </div>
 </body>
