@@ -58,3 +58,19 @@ def test_seoul(monkeypatch):
     monkeypatch.setattr(seoul, "session", lambda: FakeSession({"culturalEventInfo": {"culturalEventInfo": {"row": [row]}}}))
     ev, _ = seoul.collect({}, {"SEOUL_API_KEY": "k"}, {})
     assert ev[0].start_date == FUT and ev[0].region == "서울"
+
+
+def test_kopis_partial_failure(monkeypatch, tmp_path):
+    monkeypatch.setattr(kopis, "CACHE", str(tmp_path / "c.json"))
+    monkeypatch.setattr(kopis, "FAC_CACHE", str(tmp_path / "f.json"))
+    monkeypatch.setattr(kopis.time, "sleep", lambda *_: None)
+
+    class Flaky(FakeSession):
+        def get(self, url, params=None, timeout=None):
+            if params and params.get("shcate") == "CCCA":
+                return SimpleNamespace(status_code=400, content=b"bad", text="bad")
+            return super().get(url, params, timeout)
+
+    monkeypatch.setattr(kopis, "session", lambda: Flaky({"pblprfr/PF": DETAIL, "pblprfr": LIST}))
+    ev, _ = kopis.collect({"genres": ["CCCD", "CCCA"]}, {"KOPIS_API_KEY": "k"}, {})
+    assert len(ev) == 1  # CCCA 실패해도 CCCD 결과는 살린다

@@ -32,27 +32,33 @@ def collect(cfg, secrets, config):
     fetched = now_kst().isoformat(timespec="seconds")
 
     items = []
+    failures = []
     for g in genres:
         page = 1
         while True:
-            r = s.get(f"{BASE}/pblprfr", params={
+            r = _get(s, f"{BASE}/pblprfr", {
                 "service": key, "stdate": st.strftime("%Y%m%d"), "eddate": ed.strftime("%Y%m%d"),
                 "cpage": page, "rows": 100, "shcate": g,
-            }, timeout=30)
-            r.raise_for_status()
-            root = ET.fromstring(r.content)
-            dbs = root.findall("db")
+            })
+            if r is None:
+                failures.append(f"{g} p{page}")
+                break
+            dbs = ET.fromstring(r.content).findall("db")
             for db in dbs:
                 items.append((g, db))
             if len(dbs) < 100 or page >= 30:
                 break
             page += 1
-            time.sleep(0.2)
+            time.sleep(0.5)
+    if failures:
+        log.warning("[kopis] list pages failed: %s (수집된 %d건으로 계속)", ", ".join(failures), len(items))
+    if not items:
+        raise RuntimeError("KOPIS 목록을 하나도 받지 못함")
 
     cache = _load(CACHE)
     facilities = _load(FAC_CACHE)
     max_fac = int(cfg.get("max_facility", 800))
-    fetched_detail = fetched_fac = 0
+    fetched_detail = fetched_fac = fails = 0
     events = []
     for g, db in items:
         mt20id = _txt(db, "mt20id")
@@ -71,10 +77,15 @@ def collect(cfg, secrets, config):
         if ("mt10id" not in cache.get(mt20id, {})) and fetched_detail < max_detail:
             try:
                 cache[mt20id] = _fetch_detail(s, key, mt20id)
+                fails = 0
             except Exception as e:  # noqa: BLE001
                 log.debug("kopis detail %s failed: %s", mt20id, e)
+                fails += 1
+                if fails >= 5:
+                    log.warning("[kopis] 상세 조회가 연속 실패해 오늘은 여기까지 (%d건 조회)", fetched_detail)
+                    max_detail = fetched_detail
             fetched_detail += 1
-            time.sleep(0.1)
+            time.sleep(0.2)
         if mt20id in cache:
             _apply_detail(cache[mt20id], ev)
             fid = cache[mt20id].get("mt10id", "")
@@ -84,15 +95,16 @@ def collect(cfg, secrets, config):
                 except Exception as e:  # noqa: BLE001
                     log.debug("kopis facility %s failed: %s", fid, e)
                 fetched_fac += 1
-                time.sleep(0.1)
+                time.sleep(0.2)
             fac = facilities.get(fid, {})
             ev.city = fac.get("city", "")
             if not ev.region and fac.get("address"):
                 ev.region = normalize_region(fac["address"])
         if ev.start_date:
             events.append(ev)
-    live = {_txt(db, "mt20id") for _, db in items}
-    cache = {k: v for k, v in cache.items() if k in live}
+    if not failures:  # 목록을 다 받았을 때만 끝난 공연의 캐시를 정리
+        live = {_txt(db, "mt20id") for _, db in items}
+        cache = {k: v for k, v in cache.items() if k in live}
     _save(CACHE, cache)
     _save(FAC_CACHE, facilities)
     log.info("[kopis] detail fetched=%d cached=%d, facility fetched=%d cached=%d",
@@ -100,9 +112,26 @@ def collect(cfg, secrets, config):
     return events, []
 
 
+def _get(s, url, params, tries=4):
+    """KOPIS는 짧은 시간에 호출이 몰리면 400/5xx를 돌려줄 때가 있어 간격을 늘려 재시도한다."""
+    last = ""
+    for n in range(tries):
+        try:
+            r = s.get(url, params=params, timeout=30)
+            if r.status_code == 200 and r.content.lstrip().startswith(b"<"):
+                return r
+            last = f"HTTP {r.status_code} {r.text[:200]!r}"
+        except Exception as e:  # noqa: BLE001
+            last = str(e)
+        time.sleep(3 * (n + 1) ** 2)
+    log.warning("[kopis] %s failed: %s", url.rsplit("/", 1)[-1], last)
+    return None
+
+
 def _fetch_detail(s, key, mt20id) -> dict:
-    r = s.get(f"{BASE}/pblprfr/{mt20id}", params={"service": key}, timeout=30)
-    r.raise_for_status()
+    r = _get(s, f"{BASE}/pblprfr/{mt20id}", {"service": key}, tries=2)
+    if r is None:
+        raise RuntimeError("detail failed")
     db = ET.fromstring(r.content).find("db")
     if db is None:
         return {}
@@ -123,8 +152,9 @@ def _fetch_detail(s, key, mt20id) -> dict:
 
 
 def _fetch_facility(s, key, mt10id) -> dict:
-    r = s.get(f"{BASE}/prfplc/{mt10id}", params={"service": key}, timeout=30)
-    r.raise_for_status()
+    r = _get(s, f"{BASE}/prfplc/{mt10id}", {"service": key}, tries=2)
+    if r is None:
+        raise RuntimeError("facility failed")
     db = ET.fromstring(r.content).find("db")
     if db is None:
         return {}
