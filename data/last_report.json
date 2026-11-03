@@ -1,5 +1,5 @@
 {
- "kopis": "ok events=1731 posts=0",
+ "kopis": "error: 400 Client Error: Bad Request for url: https://kopis.or.kr/openApi/restful/pblprfr?service=59acbc966d864e888f31d0e6495a7c8a&stdate=20261103&eddate=20270201&cpage=5&rows=100&shcate=CCCD",
  "seoul": "skipped: missing secrets: SEOUL_API_KEY",
  "datagokr": "disabled",
  "naver": "skipped: missing secrets: NAVER_CLIENT_ID, NAVER_CLIENT_SECRET",
@@ -10,6 +10,6 @@
  "web_board": "disabled",
  "extract": "posts=0 events=0",
  "total": 1655,
- "new": 1655,
- "at": "2026-11-03T15:17:12+09:00"
+ "new": 0,
+ "at": "2026-11-03T15:30:38+09:00"
 }
