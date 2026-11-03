@@ -1,0 +1,470 @@
+[
+ {
+  "title": "밤하늘 밴드 전국투어 〈별자리〉 서울",
+  "start_date": "2026-10-31",
+  "end_date": "2026-11-01",
+  "venue": "올림픽공원 올림픽홀",
+  "region": "서울",
+  "artists": [
+   "밤하늘 밴드"
+  ],
+  "genre": "대중음악",
+  "times": "토 18:00, 일 17:00",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "11.3 20시",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "",
+  "updated": ""
+ },
+ {
+  "title": "윤서하 단독 콘서트 'Blue Hour'",
+  "start_date": "2026-11-01",
+  "end_date": "2026-11-01",
+  "venue": "블루스퀘어 SOL트래블홀",
+  "region": "서울",
+  "artists": [
+   "윤서하"
+  ],
+  "genre": "대중음악",
+  "times": "19:30",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "2026-10-26T12:00:00+09:00",
+  "updated": ""
+ },
+ {
+  "title": "부산 바다소리 뮤직 페스티벌 2026",
+  "start_date": "2026-10-31",
+  "end_date": "2026-11-01",
+  "venue": "벡스코 제1전시장",
+  "region": "부산",
+  "artists": [
+   "파도소년",
+   "미드나잇 클럽",
+   "한여름"
+  ],
+  "genre": "대중음악",
+  "times": "토 18:00, 일 17:00",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "",
+  "updated": ""
+ },
+ {
+  "title": "코리안심포니 가을 정기연주회",
+  "start_date": "2026-10-30",
+  "end_date": "2026-10-30",
+  "venue": "예술의전당 콘서트홀",
+  "region": "서울",
+  "artists": [
+   "코리안심포니오케스트라"
+  ],
+  "genre": "클래식",
+  "times": "19:30",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "2026-10-26T12:00:00+09:00",
+  "updated": ""
+ },
+ {
+  "title": "대구 재즈 위크엔드",
+  "start_date": "2026-10-29",
+  "end_date": "2026-10-30",
+  "venue": "수성아트피아 대극장",
+  "region": "대구",
+  "artists": [
+   "김재윤 트리오"
+  ],
+  "genre": "대중음악",
+  "times": "토 18:00, 일 17:00",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "2026-10-26T12:00:00+09:00",
+  "updated": ""
+ },
+ {
+  "title": "광주 국악 상설공연 〈달빛 산조〉",
+  "start_date": "2026-10-28",
+  "end_date": "2026-10-28",
+  "venue": "빛고을시민문화관",
+  "region": "광주",
+  "artists": [
+   "광주시립국악단"
+  ],
+  "genre": "국악",
+  "times": "19:30",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "2026-10-26T12:00:00+09:00",
+  "updated": ""
+ },
+ {
+  "title": "레드플랫 팬콘서트 〈우리의 계절〉",
+  "start_date": "2026-11-02",
+  "end_date": "2026-11-02",
+  "venue": "인스파이어 아레나",
+  "region": "인천",
+  "artists": [
+   "레드플랫"
+  ],
+  "genre": "대중음악",
+  "times": "19:30",
+  "price": "",
+  "poster": "",
+  "ticket_links": [],
+  "ticket_open": "11.4 오후8시",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "naver_news",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 0.75,
+  "first_seen": "",
+  "updated": ""
+ },
+ {
+  "title": "하이웨이브 2026 아시아투어 인 서울",
+  "start_date": "2026-11-20",
+  "end_date": "2026-11-21",
+  "venue": "KSPO DOME",
+  "region": "서울",
+  "artists": [
+   "하이웨이브"
+  ],
+  "genre": "대중음악",
+  "times": "토 18:00, 일 17:00",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "11.5 20시",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "",
+  "updated": ""
+ },
+ {
+  "title": "온도 단독 공연 '미열'",
+  "start_date": "2026-11-08",
+  "end_date": "2026-11-08",
+  "venue": "롤링홀",
+  "region": "서울",
+  "artists": [
+   "온도"
+  ],
+  "genre": "대중음악",
+  "times": "19:30",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "",
+  "updated": ""
+ },
+ {
+  "title": "전주 얼터너티브 사운드 나잇",
+  "start_date": "2026-11-05",
+  "end_date": "2026-11-05",
+  "venue": "전북대 삼성문화회관",
+  "region": "전북",
+  "artists": [
+   "실버스크린",
+   "회색도시"
+  ],
+  "genre": "대중음악",
+  "times": "19:30",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "2026-10-26T12:00:00+09:00",
+  "updated": ""
+ },
+ {
+  "title": "제주 노을 어쿠스틱 콘서트",
+  "start_date": "2026-10-27",
+  "end_date": "2026-10-27",
+  "venue": "제주아트센터",
+  "region": "제주",
+  "artists": [
+   "이노을"
+  ],
+  "genre": "대중음악",
+  "times": "19:30",
+  "price": "",
+  "poster": "",
+  "ticket_links": [],
+  "ticket_open": "",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "seoul",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 0.95,
+  "first_seen": "2026-10-26T12:00:00+09:00",
+  "updated": ""
+ },
+ {
+  "title": "수원 시민의 날 축하음악회",
+  "start_date": "2026-10-29",
+  "end_date": "2026-10-29",
+  "venue": "경기아트센터 대극장",
+  "region": "경기",
+  "artists": [
+   "경기필하모닉"
+  ],
+  "genre": "클래식",
+  "times": "19:30",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "",
+  "updated": ""
+ },
+ {
+  "title": "모노크롬 크리스마스 콘서트",
+  "start_date": "2026-12-21",
+  "end_date": "2026-12-23",
+  "venue": "고려대학교 화정체육관",
+  "region": "서울",
+  "artists": [
+   "모노크롬"
+  ],
+  "genre": "대중음악",
+  "times": "토 18:00, 일 17:00",
+  "price": "",
+  "poster": "",
+  "ticket_links": [],
+  "ticket_open": "11.10 20시",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "naver_cafe",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 0.6,
+  "first_seen": "",
+  "updated": ""
+ },
+ {
+  "title": "창원 청춘 버스킹 페스타",
+  "start_date": "2026-11-02",
+  "end_date": "2026-11-02",
+  "venue": "창원 용지문화공원",
+  "region": "경남",
+  "artists": [
+   "로컬밴드 연합"
+  ],
+  "genre": "대중음악",
+  "times": "19:30",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "2026-10-26T12:00:00+09:00",
+  "updated": ""
+ },
+ {
+  "title": "한빛 클래식 리사이틀",
+  "start_date": "2026-11-14",
+  "end_date": "2026-11-14",
+  "venue": "롯데콘서트홀",
+  "region": "서울",
+  "artists": [
+   "한빛"
+  ],
+  "genre": "클래식",
+  "times": "19:30",
+  "price": "R석 132,000원 / S석 110,000원",
+  "poster": "",
+  "ticket_links": [
+   {
+    "name": "예매처",
+    "url": "https://tickets.example.com/"
+   }
+  ],
+  "ticket_open": "",
+  "status": "공연예정",
+  "sources": [
+   {
+    "name": "kopis",
+    "url": "https://example.com/sample",
+    "fetched_at": ""
+   }
+  ],
+  "confidence": 1.0,
+  "first_seen": "",
+  "updated": ""
+ }
+]

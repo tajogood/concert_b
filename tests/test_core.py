@@ -1,0 +1,47 @@
+from concertbot.models import Event, RawPost, Source
+from concertbot import store, extract
+from datetime import timedelta
+
+from concertbot.util import normalize_region, today_kst
+
+
+def d(n):
+    return (today_kst() + timedelta(days=n)).isoformat()
+
+
+def test_region():
+    assert normalize_region("서울특별시") == "서울"
+    assert normalize_region("경기도 고양시") == "경기"
+    assert normalize_region("KSPO DOME") == "서울"
+
+
+def test_dedupe_structured_and_news():
+    a = Event("하이웨이브 2026 아시아투어 인 서울", d(20), d(21), "KSPO DOME", "서울",
+              artists=["하이웨이브"], sources=[Source("kopis", "k1")], confidence=1.0)
+    b = Event("하이웨이브 아시아 투어 서울 콘서트", d(20), "", "올림픽공원 KSPO DOME", "서울",
+              artists=["하이웨이브"], ticket_open="11.5 20시", sources=[Source("naver_news", "n1")], confidence=0.6)
+    evs, added = store.merge([], [b, a])
+    assert len(evs) == 1 and evs[0].confidence == 1.0
+    assert evs[0].ticket_open == "11.5 20시" and len(evs[0].sources) == 2
+
+
+def test_corroboration_raises_confidence():
+    a = Event("레드플랫 팬콘서트", d(5), venue="인스파이어 아레나", artists=["레드플랫"],
+              sources=[Source("naver_news", "1")], confidence=0.6)
+    b = Event("레드플랫 팬콘서트 우리의 계절", d(5), venue="인스파이어 아레나", artists=["레드플랫"],
+              sources=[Source("x", "2")], confidence=0.6)
+    evs, _ = store.merge([], [a, b])
+    assert len(evs) == 1 and evs[0].confidence >= 0.7
+
+
+def test_rule_extract():
+    p = RawPost("naver_news", "u", "밴드 온도, 12월 8일 롤링홀서 단독 콘서트 개최",
+                "밴드 온도가 12월 8일 서울 롤링홀에서 단독 콘서트를 연다. 티켓은 11월 3일 오후 8시 예매 오픈.")
+    assert extract.relevant(p)
+    e = extract.rule_extract(p, ["온도"])
+    assert e and e.start_date.endswith("12-08") and e.venue == "롤링홀" and e.region == "서울"
+    assert "8시" in e.ticket_open
+
+
+def test_noise_filtered():
+    assert not extract.relevant(RawPost("daum_cafe", "u", "콘서트 티켓 양도합니다", "11월 8일"))

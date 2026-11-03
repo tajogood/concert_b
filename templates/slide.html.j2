@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<style>
+{{ base_css|safe }}
+html, body { width: 1080px; height: 1350px; overflow: hidden; }
+body {
+  background: var(--night);
+  color: var(--stock);
+  font-family: "Pretendard", "Noto Sans CJK KR", sans-serif;
+  position: relative;
+}
+/* 무대 조명 한 줄기: 장식은 이것 하나 */
+body::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 55% at 82% -8%, rgba(255,210,63,.28), transparent 70%);
+  pointer-events: none;
+}
+.frame { position: relative; height: 100%; padding: 84px 72px 72px; display: flex; flex-direction: column; }
+.top { display: flex; justify-content: space-between; align-items: baseline; font-size: 30px; font-weight: 500; color: var(--dim); }
+.top b { color: var(--stock); font-weight: 700; }
+.pager { font-variant-numeric: tabular-nums; }
+
+/* ---------- cover ---------- */
+.cover-date { font-family: "BlackHan"; font-size: 330px; line-height: .86; letter-spacing: -8px; color: var(--spot); margin-top: 80px; }
+.cover-wd { font-family: "BlackHan"; font-size: 120px; line-height: 1; color: var(--stock); margin-top: 18px; }
+.cover-head { font-size: 66px; font-weight: 800; line-height: 1.22; margin-top: auto; letter-spacing: -1.5px; }
+.cover-stats { display: flex; gap: 20px; margin-top: 48px; }
+.stat { flex: 1; border: 3px solid var(--night-2); background: var(--night-2); border-radius: 28px; padding: 30px 34px; }
+.stat .n { font-family: "BlackHan"; font-size: 96px; line-height: 1; color: var(--stock); }
+.stat.new .n { color: var(--glow); }
+.stat .l { font-size: 30px; font-weight: 500; color: var(--dim); margin-top: 10px; }
+.swipe { margin-top: 44px; font-size: 30px; color: var(--dim); }
+
+/* ---------- list slides ---------- */
+.head { font-family: "BlackHan"; font-size: 92px; line-height: 1.05; margin: 40px 0 36px; letter-spacing: -1px; }
+.head small { display: block; font-family: "Pretendard"; font-size: 34px; font-weight: 500; color: var(--dim); margin-top: 14px; letter-spacing: 0; }
+.head.new { color: var(--glow); }
+.stubs { display: flex; flex-direction: column; gap: 24px; }
+
+/* 티켓 한 장 = 공연 하나. 왼쪽 그루터기(날짜) + 절취선 + 본문 */
+.stub { display: flex; background: var(--stock); color: var(--ink); border-radius: 26px; min-height: 272px; position: relative;
+  -webkit-mask: radial-gradient(circle 22px at 228px 0, transparent 21px, #000 22px) top / 100% 51% no-repeat,
+                radial-gradient(circle 22px at 228px 100%, transparent 21px, #000 22px) bottom / 100% 51% no-repeat; }
+.stub .date { width: 228px; flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-right: 4px dashed var(--stock-edge); padding: 18px 10px; }
+.stub .md { font-family: "BlackHan"; font-size: 80px; line-height: 1; letter-spacing: -2px; }
+.stub .wd { font-size: 30px; font-weight: 700; color: var(--ink-soft); margin-top: 8px; }
+.stub .range { font-size: 24px; font-weight: 500; color: var(--ink-soft); margin-top: 6px; }
+.stub .body { flex: 1; padding: 30px 34px 28px 36px; display: flex; flex-direction: column; min-width: 0; }
+.stub .title { word-break: keep-all; font-size: 46px; font-weight: 800; line-height: 1.2; letter-spacing: -1px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.stub .who { font-size: 30px; font-weight: 500; color: var(--ink-soft); margin-top: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stub .where { display: flex; align-items: center; gap: 14px; margin-top: auto; padding-top: 16px; font-size: 30px; font-weight: 700; min-width: 0; }
+.stub .where span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.region { flex: none; background: var(--ink); color: var(--stock); border-radius: 12px; padding: 4px 14px 5px; font-size: 26px; }
+.tix { flex: none; margin-top: 12px; font-size: 27px; font-weight: 700; color: #B3126A; }
+.stub .poster { width: 168px; flex: none; margin: 18px 18px 18px 0; border-radius: 16px; background: var(--stock-edge) center/cover no-repeat; }
+.newtag { display: inline-block; vertical-align: 6px; margin-right: 12px; background: var(--glow); color: #fff;
+  font-family: "BlackHan"; font-size: 26px; letter-spacing: 0; padding: 3px 12px 5px; border-radius: 10px; }
+
+/* ---------- outro ---------- */
+.outro-big { font-family: "BlackHan"; font-size: 132px; line-height: 1.08; margin-top: 120px; letter-spacing: -2px; }
+.outro-big em { font-style: normal; color: var(--spot); }
+.outro-p { font-size: 40px; font-weight: 500; line-height: 1.55; color: var(--stock); margin-top: 60px; }
+.url { margin-top: auto; background: var(--stock); color: var(--ink); border-radius: 26px; padding: 34px 40px; font-size: 36px; font-weight: 800; word-break: break-all; }
+.note { margin-top: 26px; font-size: 26px; color: var(--dim); line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="top"><b>{{ brand }}</b><span class="pager">{{ index }}/{{ total }}</span></div>
+
+{% if slide.kind == "cover" %}
+  <div class="cover-date">{{ today_md }}</div>
+  <div class="cover-wd">{{ today_wd }}요일</div>
+  <div class="cover-head">오늘 확인한<br>전국 음악 공연</div>
+  <div class="cover-stats">
+    <div class="stat new"><div class="n">{{ counts.new }}</div><div class="l">새로 뜬 공연</div></div>
+    <div class="stat"><div class="n">{{ counts.week }}</div><div class="l">7일 안에 열리는 공연</div></div>
+  </div>
+  <div class="swipe">옆으로 넘겨서 확인하세요</div>
+
+{% elif slide.kind == "list" %}
+  <div class="head{% if slide.is_new %} new{% endif %}">{{ slide.heading }}<small>{{ slide.sub }}</small></div>
+  <div class="stubs">
+  {% for e in slide.events %}
+    <div class="stub">
+      <div class="date">
+        <div class="md">{{ e.md }}</div>
+        <div class="wd">{{ e.wd }}</div>
+        {% if e.range %}<div class="range">~{{ e.range }}</div>{% endif %}
+      </div>
+      <div class="body">
+        <div class="title">{% if e.is_new and not slide.is_new %}<span class="newtag">NEW</span>{% endif %}{{ e.title }}</div>
+        {% if e.who %}<div class="who">{{ e.who }}</div>{% endif %}
+        <div class="where">{% if e.region %}<span class="region">{{ e.region }}</span>{% endif %}<span>{{ e.venue or "장소 미정" }}</span></div>
+        {% if e.ticket_open %}<div class="tix">티켓 오픈 {{ e.ticket_open }}</div>{% endif %}
+      </div>
+      {% if e.poster and show_posters %}<div class="poster" style="background-image:url('{{ e.poster }}')"></div>{% endif %}
+    </div>
+  {% endfor %}
+  </div>
+
+{% elif slide.kind == "outro" %}
+  <div class="outro-big">놓친 공연은<br><em>여기</em>에<br>다 있어요</div>
+  <div class="outro-p">지역별 필터, 날짜순 전체 일정,<br>예매 링크까지 모바일 페이지에서 확인하세요.</div>
+  <div class="url">{{ site_url_short }}</div>
+  <div class="note">매일 정오 업데이트. 공연 정보는 KOPIS·지자체 공공데이터와 뉴스·SNS를 모아 정리했으며, 예매 전 공식 공지를 꼭 확인하세요.</div>
+{% endif %}
+</div>
+</body>
+</html>

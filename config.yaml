@@ -1,0 +1,108 @@
+brand: "오늘의 공연"                # 슬라이드·페이지 상단에 표시될 이름 (계정명에 맞게 변경)
+site_url: ""                         # 예: https://<github아이디>.github.io/concert-bot  (워크플로가 자동 주입)
+site_dir: site
+
+# 신뢰도 기준: KOPIS/지자체=0.9~1.0, LLM 추출=0.6, 여러 출처 교차 확인 시 최대 0.85
+min_confidence_site: 0.5
+min_confidence_instagram: 0.7
+
+# 관심 아티스트 — 검색어로도 쓰이고, 규칙 기반 추출에서 아티스트 인식에 쓰인다
+watch_artists:
+  - 아이유
+  - 데이식스
+  - 세븐틴
+  - 잔나비
+  - 실리카겔
+  - 임영웅
+
+sources:
+  kopis:                     # ★ 핵심. 전국 공연 정형 데이터
+    enabled: true
+    days_ahead: 90
+    genres: [CCCD, CCCA, CCCC]   # 대중음악, 클래식, 국악 (뮤지컬 추가: GGGA)
+    max_detail: 400              # 상세(출연진·가격·예매처) 조회 최대 건수
+
+  seoul:                     # 서울시 문화행사
+    enabled: true
+    codenames: [콘서트, 클래식, 국악]
+
+  datagokr:                  # 공공데이터포털/지자체 API (명세 확인 후 endpoints 채우기)
+    enabled: false
+    days_ahead: 90
+    endpoints:
+      - name: culture_portal
+        enabled: true
+        key_env: DATA_GO_KR_KEY
+        # 한국문화정보원_한눈에보는문화정보조회서비스 — 활용신청 후 마이페이지 명세에서 URL/필드 확인
+        url: "https://apis.data.go.kr/B553457/cultureinfo/period2"
+        format: xml
+        item_tag: item
+        params: {serviceKey: "{KEY}", from: "{FROM}", to: "{TO}", PageNo: 1, numOfrows: 500}
+        include_keywords: [음악, 콘서트, 공연]
+        fields: {title: title, start_date: startDate, end_date: endDate, venue: place,
+                 region: area, price: price, poster: thumbnail, url: url}
+
+  naver:                     # 뉴스 + 네이버 카페(팬카페) + 블로그 — 공식 검색 API
+    enabled: true
+    kinds: [news, cafearticle]
+    lookback_hours: 36
+    queries:
+      - 콘서트 개최
+      - 단독 콘서트
+      - 콘서트 티켓 오픈
+      - 내한 공연 확정
+      - 음악 페스티벌 라인업
+      - 팬콘서트 개최
+      - 전국투어 콘서트
+
+  daum:                      # 다음 카페(팬카페) — 카카오 검색 API
+    enabled: true
+    lookback_hours: 36
+    queries:
+      - 콘서트 티켓 오픈
+      - 콘서트 공지
+
+  x_api:                     # X 공식 API (유료). 토큰 있을 때만 동작
+    enabled: false
+    max_requests: 5
+    queries:
+      - 콘서트 티켓오픈
+      - 단독콘서트 개최
+
+  x_scrape:                  # X 웹 스크래핑 (부계정 세션 필요, 약관 위반·차단 위험)
+    enabled: false
+    max_per_page: 30
+    queries:
+      - 콘서트 티켓오픈
+    accounts: []             # 공식 계정 핸들 예: [melon_ticket, interpark_ticket]
+
+  instagram:                 # 인스타 해시태그 + 공식 계정 조회 (업로드 토큰 재사용)
+    enabled: true
+    hashtags: [콘서트티켓팅, 단독콘서트, 콘서트일정, 내한공연, 뮤직페스티벌]   # 7일간 30개까지
+    accounts: []             # 기획사·공연장 비즈니스 계정 핸들
+    account_media_limit: 8
+
+  web_board:                 # 공개 게시판/RSS (로그인 필요 없는 곳만)
+    enabled: false
+    delay_sec: 2
+    sites: []
+    #  - name: 예시 공연장 공지
+    #    url: https://example.com/board/notice
+    #    type: html
+    #    item: "table.board tbody tr"
+    #    title: "td.subject a"
+    #    link: "td.subject a"
+
+extract:
+  use_llm: true              # ANTHROPIC_API_KEY 있으면 Claude로 추출, 없으면 규칙 기반
+  model: claude-haiku-5-5
+  max_posts: 300
+
+instagram:
+  api_host: graph.facebook.com     # Facebook 로그인 토큰 기준 (해시태그 검색도 이 방식에서만 가능)
+  api_version: v26.0
+  max_slides: 10                   # 표지·마무리 포함. API 최대 20
+  per_slide_new: 3
+  per_slide_week: 3
+  show_posters: true
+  hashtags: [콘서트, 공연정보, 콘서트일정, 공연일정, 오늘의공연, 티켓팅]

@@ -1,0 +1,147 @@
+name: daily-concerts
+
+on:
+  schedule:
+    # 매일 정오(KST) 게시 목표. GitHub 예약 실행은 정각에 몰려 5~20분 늦어질 수 있어
+    # 11:40 KST(02:40 UTC)에 시작한다. 수집~게시까지 보통 10~15분.
+    - cron: "40 2 * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "인스타 업로드 생략 (테스트)"
+        type: boolean
+        default: true
+      force:
+        description: "오늘 이미 게시했어도 다시 게시"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: daily-concerts
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Seoul
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  collect-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    outputs:
+      site_url: ${{ steps.url.outputs.site_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Pages URL
+        id: url
+        run: |
+          URL="${{ vars.SITE_URL }}"
+          if [ -z "$URL" ]; then
+            OWNER="${GITHUB_REPOSITORY_OWNER,,}"; REPO="${GITHUB_REPOSITORY#*/}"
+            URL="https://${OWNER}.github.io/${REPO}"
+          fi
+          echo "site_url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Collect
+        env:
+          KOPIS_API_KEY: ${{ secrets.KOPIS_API_KEY }}
+          SEOUL_API_KEY: ${{ secrets.SEOUL_API_KEY }}
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          KAKAO_REST_KEY: ${{ secrets.KAKAO_REST_KEY }}
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          X_STORAGE_STATE_B64: ${{ secrets.X_STORAGE_STATE_B64 }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python main.py collect
+
+      - name: Build page + carousel
+        env:
+          SITE_URL: ${{ steps.url.outputs.site_url }}
+        run: python main.py build
+
+      - name: Save data
+        run: |
+          git config user.name "concert-bot"
+          git config user.email "concert-bot@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet || git commit -m "data: $(date +%F) 공연 정보 업데이트"
+          git push
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: collect-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+
+  publish:
+    needs: [collect-build, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}   # 방금 커밋한 data/ 포함
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Fetch today's cards from Pages
+        env:
+          SITE_URL: ${{ needs.collect-build.outputs.site_url }}
+        run: |
+          D=$(date +%F)
+          mkdir -p site/cards/$D
+          for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do
+            curl -fsS --retry 5 --retry-delay 10 "$SITE_URL/cards/$D/manifest.json" -o site/cards/$D/manifest.json && break
+            sleep 10
+          done
+          curl -fsS "$SITE_URL/cards/$D/caption.txt" -o site/cards/$D/caption.txt
+
+      - name: Publish to Instagram
+        env:
+          SITE_URL: ${{ needs.collect-build.outputs.site_url }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+        run: |
+          ARGS=""
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="--dry-run"; fi
+          if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
+          python main.py publish $ARGS
+
+      - name: Save posted log
+        run: |
+          git config user.name "concert-bot"
+          git config user.email "concert-bot@users.noreply.github.com"
+          git add data/posted.json 2>/dev/null || true
+          git diff --cached --quiet || (git commit -m "posted: $(date +%F)" && git pull --rebase && git push)

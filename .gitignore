@@ -1,0 +1,6 @@
+site/
+build/
+x_state.json
+__pycache__/
+*.pyc
+.env

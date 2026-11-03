@@ -1,0 +1,2 @@
+Pretendard (OFL-1.1) https://github.com/orioncactus/pretendard
+Black Han Sans (OFL-1.1) via @fontsource/black-han-sans

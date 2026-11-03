@@ -1,0 +1,20 @@
+@font-face { font-family: "Pretendard"; font-weight: 400; src: url("{{ font_base }}/Pretendard-Regular.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "Pretendard"; font-weight: 500; src: url("{{ font_base }}/Pretendard-Medium.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "Pretendard"; font-weight: 700; src: url("{{ font_base }}/Pretendard-Bold.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "Pretendard"; font-weight: 800; src: url("{{ font_base }}/Pretendard-ExtraBold.woff2") format("woff2"); font-display: block; }
+@font-face { font-family: "BlackHan"; src: url("{{ font_base }}/black-han-sans-korean-400-normal.woff2") format("woff2"); unicode-range: U+1100-11FF, U+3130-318F, U+AC00-D7AF; font-display: block; }
+@font-face { font-family: "BlackHan"; src: url("{{ font_base }}/black-han-sans-latin-400-normal.woff2") format("woff2"); unicode-range: U+0000-00FF; font-display: block; }
+
+:root {
+  /* 공연장 조명이 꺼진 객석의 남색, 티켓 용지, 무대 조명, 응원봉 핑크 */
+  --night: #17144A;
+  --night-2: #221E66;
+  --stock: #F1EDFF;
+  --stock-edge: #D9D2FA;
+  --spot: #FFD23F;
+  --glow: #FF4FA3;
+  --dim: #9A95C9;
+  --ink: #17144A;
+  --ink-soft: #5A5590;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
