@@ -213,3 +213,94 @@ def build_post_caption(post: dict, cfg: dict) -> str:
     tags = [f"{r}공연", f"{r}콘서트", f"{r}가볼만한곳"] + list(cfg.get("instagram", {}).get("hashtags", []))
     lines.append(" ".join("#" + t.lstrip("#") for t in dict.fromkeys(tags))[:600])
     return "\n".join(lines)[:2150]
+
+
+# ------------------------------------------------------------------ 축제 게시물
+# 앞쪽: 축제 표지·정보 → 넘기면 근처 관광지 → 마무리
+def plan_festival_posts(events: list[Event], cfg: dict, posted_keys: set, tour_key: str) -> list[dict]:
+    from .nearby import find_nearby
+
+    fcfg = cfg.get("instagram", {}).get("festival_posts", {})
+    n = int(fcfg.get("per_slot", 1))
+    if n <= 0:
+        return []
+    today = today_kst()
+    window = (today + timedelta(days=int(fcfg.get("days_ahead", 10)))).isoformat()
+    max_len = int(fcfg.get("max_length_days", 45))
+    genres = set(fcfg.get("genres", ["축제", "버스킹"]))
+    cands = []
+    for e in split_pages(events)[1]:
+        key = f"fest-{e.ext_id or e.id}"
+        if key in posted_keys or e.genre not in genres or not e.poster:
+            continue
+        try:
+            length = (date.fromisoformat(e.end_date or e.start_date) - date.fromisoformat(e.start_date)).days
+        except ValueError:
+            continue
+        if length > max_len or (e.end_date or e.start_date) < (today + timedelta(days=1)).isoformat() or e.start_date > window:
+            continue
+        cands.append((e.start_date, -bool(e.story), e.title, key, e))
+    posts = []
+    for _, _, _, key, e in sorted(cands)[:n]:
+        spots = find_nearby(e.lat, e.lng, tour_key, fcfg.get("nearby", {}), exclude_title=e.title)
+        slides = [{"kind": "fest_cover"}, {"kind": "fest_info"}] + [{"kind": "spot", "spot": sp, "first": i == 0}
+                                                                     for i, sp in enumerate(spots)] + [{"kind": "outro"}]
+        posts.append({"key": key, "kind": "festival", "event": e, "spots": spots, "slides": slides,
+                      "region_full": REGION_FULL.get(e.region, e.region)})
+    return posts
+
+
+def _krange(e: Event) -> str:
+    s0 = date.fromisoformat(e.start_date)
+    s1 = date.fromisoformat(e.end_date or e.start_date)
+    a = f"{s0.month}.{s0.day} {WEEKDAYS[s0.weekday()]}"
+    return a if s0 == s1 else f"{a} – {s1.month}.{s1.day} {WEEKDAYS[s1.weekday()]}"
+
+
+def build_festival_slides(post: dict, cfg: dict, out_dir: str) -> list[str]:
+    os.makedirs(out_dir, exist_ok=True)
+    font_base = "file://" + os.path.join(ROOT, "assets", "fonts")
+    url = cfg.get("site_url", "")
+    t = env.get_template("fest_slide.html.j2")
+    e = post["event"]
+    paths = []
+    for i, s in enumerate(post["slides"], 1):
+        html = t.render(slide=s, index=i, total=len(post["slides"]), e=e, post=post, range_label=_krange(e),
+                        place=" ".join(x for x in (post["region_full"], e.city) if x),
+                        brand=cfg["brand"], base_css=_base_css(font_base),
+                        logo="file://" + os.path.join(ROOT, "assets", "brand", "logo.png"),
+                        site_url_short=url.replace("https://", "").rstrip("/") or "프로필 링크",
+                        data_credit="출처: 한국관광공사")
+        p = os.path.join(out_dir, f"slide-{i:02d}.html")
+        with open(p, "w", encoding="utf-8") as f:
+            f.write(html)
+        paths.append(p)
+    return paths
+
+
+def build_festival_caption(post: dict, cfg: dict) -> str:
+    e = post["event"]
+    place = " ".join(x for x in (post["region_full"], e.city) if x)
+    lines = [f"{place} {e.title}", "", f"기간 {_krange(e)}"]
+    if e.venue:
+        lines.append(f"장소 {e.venue}")
+    if e.times:
+        lines.append(f"시간 {e.times}")
+    if e.price:
+        lines.append(f"요금 {e.price}")
+    if e.story:
+        story = e.story.strip()
+        cut = story[:220]
+        if len(story) > 220:
+            cut = cut.rsplit(" ", 1)[0] + "…"
+        lines += ["", cut]
+    if post["spots"]:
+        lines += ["", "함께 가볼 만한 곳"]
+        lines += [f"- {s['title']} ({s['dist_km']}km)" for s in post["spots"]]
+    lines += ["", "다른 축제와 공연 일정은 프로필 링크에서 확인하세요.", "출처: 한국관광공사", ""]
+    r = e.region
+    city = (e.city or "").rstrip("시군구") if e.city else ""
+    tags = [f"{r}축제", f"{r}가볼만한곳", f"{r}여행"] + ([f"{city}축제", f"{city}여행"] if city else []) + \
+        ["축제", "지역축제", "주말나들이", "국내여행"]
+    lines.append(" ".join("#" + t.replace(" ", "") for t in dict.fromkeys(tags)))
+    return "\n".join(lines)[:2150]

@@ -101,6 +101,18 @@ def cmd_build(cfg, args):
             "caption": render.build_post_caption(post, cfg),
         })
         log.info("[build] post %s: %d slides, %d events", post["key"], len(jpgs), post["count"])
+    # 축제 게시물: 축제 → 근처 관광지. 이미 올린 축제는 다시 고르지 않는다
+    posted = json.load(open(P["posted"], encoding="utf-8")) if os.path.exists(P["posted"]) else {}
+    posted_keys = {k for run in posted.values() if isinstance(run, dict) for k in run}
+    for post in render.plan_festival_posts(events, cfg, posted_keys, os.environ.get("TOUR_API_KEY", "")):
+        htmls = render.build_festival_slides(post, cfg, os.path.join(P["work"], post["key"]))
+        jpgs = capture.capture_slides(htmls, os.path.join(P["cards"], post["key"]))
+        manifest["posts"].append({
+            "key": post["key"], "title": post["event"].title,
+            "images": [f"{post['key']}/{os.path.basename(j)}" for j in jpgs],
+            "caption": render.build_festival_caption(post, cfg),
+        })
+        log.info("[build] festival %s: %d slides, %d spots", post["event"].title, len(jpgs), len(post["spots"]))
     os.makedirs(P["cards"], exist_ok=True)
     with open(os.path.join(P["cards"], "manifest.json"), "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=1)

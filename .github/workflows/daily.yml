@@ -96,6 +96,7 @@ jobs:
       - name: Build page + carousel
         env:
           SITE_URL: ${{ steps.url.outputs.site_url }}
+          TOUR_API_KEY: ${{ secrets.TOUR_API_KEY }}
         run: python main.py build --slot ${{ steps.slot.outputs.slot }}
 
       - name: Save data

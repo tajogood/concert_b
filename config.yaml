@@ -123,6 +123,12 @@ instagram:
   api_host: graph.facebook.com     # Facebook 로그인 토큰 기준 (해시태그 검색도 이 방식에서만 가능)
   api_version: v26.0
   max_slides: 10                   # 표지·마무리 포함. API 최대 20
+  festival_posts:                  # 축제 게시물 (앞: 축제, 뒤: 근처 관광지)
+    per_slot: 1                    # 회차(점심·저녁)마다 올릴 축제 수. 0이면 끔
+    days_ahead: 10                 # 이 기간 안에 시작하거나 진행 중인 축제 중에서 고름
+    max_length_days: 45            # 이보다 긴 연중 행사는 제외
+    genres: [축제, 버스킹]
+    nearby: {count: 4, radius_m: 15000, content_type: 12}   # 12 = 관광지
   regions: [서울, 경기]             # 게시물을 만들 지역. 회차마다 (지역 수 × 주 수)개 게시
   per_slide_week: 3
   show_posters: true

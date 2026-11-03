@@ -90,3 +90,17 @@ def test_split_pages():
     both = Event("국악 축제", d(3), venue="국악원", region="서울", sources=[Source("tour", "t2"), Source("kopis", "k2")])
     c, fs = render.split_pages([k, f, both])
     assert c == [k, both] and fs == [f]
+
+
+def test_plan_festival_posts():
+    from concertbot import render
+    f1 = Event("사과축제", d(2), d(5), venue="청송", region="경북", genre="축제", poster="https://x/1.jpg",
+               sources=[Source("tour", "t1")], ext_id="1")
+    f2 = Event("연중 행사", d(-100), d(200), region="서울", genre="축제", poster="https://x/2.jpg",
+               sources=[Source("tour", "t2")], ext_id="2")
+    f3 = Event("포스터 없는 축제", d(1), d(2), region="서울", genre="축제", sources=[Source("tour", "t3")], ext_id="3")
+    cfg = {"instagram": {"festival_posts": {"per_slot": 2}}}
+    posts = render.plan_festival_posts([f1, f2, f3], cfg, set(), "")
+    assert [p["key"] for p in posts] == ["fest-1"]
+    assert render.plan_festival_posts([f1], cfg, {"fest-1"}, "") == []
+    assert posts[0]["slides"][0]["kind"] == "fest_cover" and posts[0]["slides"][-1]["kind"] == "outro"

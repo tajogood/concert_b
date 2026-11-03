@@ -33,6 +33,9 @@ class Event:
     runtime: str = ""
     age: str = ""
     company: str = ""
+    ext_id: str = ""                     # 원본 시스템 id (관광공사 contentid 등)
+    lat: float = 0.0
+    lng: float = 0.0
     sources: list[Source] = field(default_factory=list)
     confidence: float = 1.0              # 정형 API=1.0, 비정형 추출은 낮게
     first_seen: str = ""

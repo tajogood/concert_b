@@ -91,6 +91,8 @@ def collect(cfg, secrets, config):
             price=detail.get("fee", ""),
             poster=(it.get("firstimage") or "").replace("http://", "https://"),
             story=detail.get("overview", ""),
+            ext_id=str(it["contentid"]),
+            lat=float(it.get("mapy") or 0), lng=float(it.get("mapx") or 0),
             company=detail.get("sponsor", ""),
             ticket_links=[{"name": "행사 정보", "url": link}],
             sources=[Source("tour", f"https://korean.visitkorea.or.kr/detail/fes_detail.do?cotid={it['contentid']}", fetched)],
