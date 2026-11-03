@@ -28,6 +28,11 @@ class Event:
     ticket_links: list[dict] = field(default_factory=list)   # [{"name":..,"url":..}]
     ticket_open: str = ""                # 티켓 오픈 일시(뉴스/SNS에서 추출)
     status: str = ""                     # 공연예정/공연중/공연완료
+    story: str = ""
+    intro_images: list[str] = field(default_factory=list)
+    runtime: str = ""
+    age: str = ""
+    company: str = ""
     sources: list[Source] = field(default_factory=list)
     confidence: float = 1.0              # 정형 API=1.0, 비정형 추출은 낮게
     first_seen: str = ""

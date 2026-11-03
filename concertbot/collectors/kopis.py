@@ -12,6 +12,7 @@ from .base import need
 
 BASE = "https://kopis.or.kr/openApi/restful"
 CACHE = os.path.join("data", "kopis_detail.json")
+DETAIL_V = 2
 FAC_CACHE = os.path.join("data", "kopis_facility.json")
 GENRE_NAMES = {"CCCD": "대중음악", "CCCA": "클래식", "CCCC": "국악", "EEEB": "서커스·마술", "GGGA": "뮤지컬"}
 
@@ -83,7 +84,7 @@ def collect(cfg, secrets, config):
             sources=[Source("kopis", f"https://www.kopis.or.kr/por/db/pblprfr/pblprfrView.do?menuId=MNU_00020&mt20Id={mt20id}", fetched)],
             confidence=1.0,
         )
-        if "mt10id" not in cache.get(mt20id, {}) and fetched_detail < max_detail and budget_ok():
+        if cache.get(mt20id, {}).get("v") != DETAIL_V and fetched_detail < max_detail and budget_ok():
             fetched_detail += 1
             try:
                 cache[mt20id] = _fetch_detail(s, key, mt20id)
@@ -113,6 +114,18 @@ def collect(cfg, secrets, config):
             log.warning("[kopis] 연속 차단돼 오늘 상세·주소 조회는 여기까지 (상세 %d, 주소 %d)", fetched_detail, fetched_fac)
         if ev.start_date:
             events.append(ev)
+    # 상세를 아직 못 받은 공연도 같은 시·도의 같은 공연장이면 시·군·구를 재사용
+    venue_city = {}
+    for e in events:
+        if e.city and e.venue:
+            venue_city.setdefault((e.region, e.venue), e.city)
+    for f in facilities.values():
+        if f.get("name") and f.get("city"):
+            venue_city.setdefault((normalize_region(f.get("address", "")), f["name"]), f["city"])
+    for e in events:
+        if not e.city and e.venue:
+            e.city = venue_city.get((e.region, e.venue)) or next(
+                (c for (r, v), c in venue_city.items() if r == e.region and len(v) >= 4 and (e.venue.startswith(v) or v.startswith(e.venue))), "")
     if not failures:  # 목록을 다 받았을 때만 끝난 공연의 캐시를 정리
         live = {_txt(db, "mt20id") for _, db in items}
         cache = {k: v for k, v in cache.items() if k in live}
@@ -153,7 +166,14 @@ def _fetch_detail(s, key, mt20id) -> dict:
         name, url = _txt(rel, "relatenm"), _txt(rel, "relateurl")
         if url:
             links.append({"name": name or "예매", "url": url})
+    company = next((_txt(db, t) for t in ("entrpsnmP", "entrpsnmA", "entrpsnmH", "entrpsnmS", "entrpsnm") if _txt(db, t)), "")
     return {
+        "v": DETAIL_V,
+        "story": _txt(db, "sty"),
+        "intro_images": [(x.text or "").strip().replace("http://", "https://") for x in db.findall("styurls/styurl") if x.text][:10],
+        "runtime": _txt(db, "prfruntime"),
+        "age": _txt(db, "prfage"),
+        "company": company,
         "artists": [c.strip() for c in cast.split(",") if c.strip()][:6],
         "price": _txt(db, "pcseguidance"),
         "times": _txt(db, "dtguidance"),
@@ -171,7 +191,7 @@ def _fetch_facility(s, key, mt10id) -> dict:
     if db is None:
         return {}
     addr = _txt(db, "adres")
-    return {"address": addr, "city": parse_city(addr)}
+    return {"name": _txt(db, "fcltynm"), "address": addr, "city": parse_city(addr)}
 
 
 def _load(path):
@@ -194,3 +214,8 @@ def _apply_detail(d: dict, ev: Event):
     if d.get("area") and not ev.region:
         ev.region = normalize_region(d["area"])
     ev.ticket_links = d.get("links", [])
+    ev.story = d.get("story", "")
+    ev.intro_images = d.get("intro_images", [])
+    ev.runtime = d.get("runtime", "")
+    ev.age = d.get("age", "")
+    ev.company = d.get("company", "")

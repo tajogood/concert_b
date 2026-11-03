@@ -9,7 +9,8 @@ from rapidfuzz import fuzz
 from .models import Event
 from .util import log, norm_text, now_kst, today_kst
 
-FIELDS_FILL = ["venue", "region", "city", "times", "price", "poster", "ticket_open", "status", "genre"]
+FIELDS_FILL = ["venue", "region", "city", "times", "price", "poster", "ticket_open", "status", "genre",
+               "story", "intro_images", "runtime", "age", "company"]
 
 
 def load(path: str) -> list[Event]:
