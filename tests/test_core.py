@@ -104,3 +104,18 @@ def test_plan_festival_posts():
     assert [p["key"] for p in posts] == ["fest-1"]
     assert render.plan_festival_posts([f1], cfg, {"fest-1"}, "") == []
     assert posts[0]["slides"][0]["kind"] == "fest_cover" and posts[0]["slides"][-1]["kind"] == "outro"
+
+
+def test_festival_weekend_first():
+    from datetime import timedelta as td
+    from concertbot import render
+    t = today_kst()
+    fri = t + td(days=(4 - t.weekday()) % 7 if t.weekday() <= 4 else 0)
+    sun = fri + td(days=6 - fri.weekday())
+    nxt = sun + td(days=3)  # 주말 이후 시작
+    early = Event("주말 지나 시작", nxt.isoformat(), (nxt + td(days=1)).isoformat(), region="경북", genre="축제",
+                  poster="https://x/1.jpg", sources=[Source("tour", "a")], ext_id="a")
+    wknd = Event("주말 축제", sun.isoformat(), sun.isoformat(), region="부산", genre="축제",
+                 poster="https://x/2.jpg", sources=[Source("tour", "b")], ext_id="b")
+    cfg = {"instagram": {"festival_posts": {"per_slot": 1, "days_ahead": 14}}}
+    assert render.plan_festival_posts([early, wknd], cfg, set(), "")[0]["key"] == "fest-b"

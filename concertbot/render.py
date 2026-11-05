@@ -228,6 +228,9 @@ def plan_festival_posts(events: list[Event], cfg: dict, posted_keys: set, tour_k
     window = (today + timedelta(days=int(fcfg.get("days_ahead", 10)))).isoformat()
     max_len = int(fcfg.get("max_length_days", 45))
     genres = set(fcfg.get("genres", ["축제", "버스킹"]))
+    dow = today.weekday()  # 월0 … 금4 토5 일6
+    fri = today if dow >= 4 else today + timedelta(days=4 - dow)
+    wk_start, wk_end = max(fri, today).isoformat(), (fri + timedelta(days=6 - fri.weekday())).isoformat()
     cands = []
     for e in split_pages(events)[1]:
         key = f"fest-{e.ext_id or e.id}"
@@ -239,9 +242,11 @@ def plan_festival_posts(events: list[Event], cfg: dict, posted_keys: set, tour_k
             continue
         if length > max_len or (e.end_date or e.start_date) < (today + timedelta(days=1)).isoformat() or e.start_date > window:
             continue
-        cands.append((e.start_date, -bool(e.story), e.title, key, e))
+        # 다가오는 주말(금~일)에 열리는 축제를 먼저, 그다음 시작일 순
+        on_weekend = e.start_date <= wk_end and (e.end_date or e.start_date) >= wk_start
+        cands.append((not on_weekend, e.start_date, -bool(e.story), e.title, key, e))
     posts = []
-    for _, _, _, key, e in sorted(cands)[:n]:
+    for *_, key, e in sorted(cands, key=lambda c: c[:4])[:n]:
         spots = find_nearby(e.lat, e.lng, tour_key, fcfg.get("nearby", {}), exclude_title=e.title)
         slides = [{"kind": "fest_cover"}, {"kind": "fest_info"}] + [{"kind": "spot", "spot": sp, "first": i == 0}
                                                                      for i, sp in enumerate(spots)] + [{"kind": "outro"}]
