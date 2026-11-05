@@ -99,7 +99,7 @@ sources:
 
   instagram:                 # 인스타 해시태그 + 공식 계정 조회 (업로드 토큰 재사용)
     enabled: true
-    hashtags: [콘서트티켓팅, 단독콘서트, 콘서트일정, 내한공연, 뮤직페스티벌, 버스킹, 버스킹일정, 거리공연, 마술공연, 서커스공연]   # 7일간 30개까지
+    hashtags: []             # Meta 'Instagram Public Content Access' 앱 검수 통과 후 사용. 예: [콘서트티켓팅, 버스킹일정, 거리공연]   # 7일간 30개까지
     accounts: []             # 기획사·공연장 비즈니스 계정 핸들
     account_media_limit: 8
 
