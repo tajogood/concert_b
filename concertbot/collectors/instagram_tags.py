@@ -6,8 +6,12 @@ from .base import need
 
 
 def collect(cfg, secrets, config):
-    token, ig_id = need(secrets, "IG_ACCESS_TOKEN", "IG_USER_ID")
+    (token,) = need(secrets, "IG_ACCESS_TOKEN")
     ver = config.get("instagram", {}).get("api_version", "v26.0")
+    ig_id = secrets.get("IG_USER_ID")
+    if not ig_id:
+        from ..instagram import discover_account
+        ig_id, _ = discover_account(token, "graph.facebook.com", ver)
     base = f"https://graph.facebook.com/{ver}"
     s = session()
     posts = []

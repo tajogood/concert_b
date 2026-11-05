@@ -134,18 +134,27 @@ def cmd_publish(cfg, args):
     if not todo:
         log.info("[publish] nothing to post for %s", P["run"])
         return
+    sec = secrets()
+    icfg = cfg.get("instagram", {})
+    host, ver = icfg.get("api_host", "graph.facebook.com"), icfg.get("api_version", "v26.0")
+    if sec["IG_ACCESS_TOKEN"] and not sec["IG_USER_ID"]:
+        from concertbot.instagram import discover_account
+        try:
+            sec["IG_USER_ID"], uname = discover_account(sec["IG_ACCESS_TOKEN"], host, ver)
+            log.info("[publish] 인스타 계정 @%s (id %s)", uname, sec["IG_USER_ID"])
+        except Exception as e:  # noqa: BLE001
+            log.error("[publish] 인스타 계정 확인 실패: %s", e)
+            if not args.dry_run:
+                sys.exit(1)
     if args.dry_run:
         for p in todo:
             log.info("[publish] dry-run %s: %d images\n%s\n---\n%s", p["key"], len(p["images"]),
                      "\n".join(base + i for i in p["images"]), p["caption"])
         return
-    sec = secrets()
     if not (sec["IG_ACCESS_TOKEN"] and sec["IG_USER_ID"]):
         log.warning("[publish] IG_ACCESS_TOKEN / IG_USER_ID 가 아직 없어 업로드를 건너뜁니다 (%d개 게시물 준비됨)", len(todo))
         return
-    icfg = cfg.get("instagram", {})
-    ig = Instagram(sec["IG_ACCESS_TOKEN"], sec["IG_USER_ID"], icfg.get("api_host", "graph.facebook.com"),
-                   icfg.get("api_version", "v26.0"))
+    ig = Instagram(sec["IG_ACCESS_TOKEN"], sec["IG_USER_ID"], host, ver)
     log.info("[publish] quota: %s", ig.publishing_quota())
     os.makedirs(os.path.dirname(P["posted"]), exist_ok=True)
     failed = 0

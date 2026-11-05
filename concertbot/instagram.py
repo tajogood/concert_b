@@ -78,3 +78,18 @@ def wait_public(urls: list[str], timeout: int = 600):
             time.sleep(10)
     if pending:
         raise InstagramError(f"images not public yet: {pending[:2]}")
+
+
+def discover_account(token: str, host: str = "graph.facebook.com", version: str = "v26.0") -> tuple[str, str]:
+    """토큰으로 관리하는 페이지에 연결된 인스타 비즈니스 계정을 찾는다 → (ig_user_id, username)."""
+    r = requests.get(f"https://{host}/{version}/me/accounts", params={
+        "fields": "name,instagram_business_account{id,username}", "access_token": token}, timeout=30)
+    data = r.json()
+    if "error" in data:
+        raise InstagramError(f"me/accounts: {data['error'].get('message')}")
+    for page in data.get("data", []):
+        ig = page.get("instagram_business_account")
+        if ig:
+            return ig["id"], ig.get("username", "")
+    raise InstagramError("토큰에 연결된 페이지 중 인스타 비즈니스 계정이 연결된 곳이 없습니다 "
+                         f"(페이지 {len(data.get('data', []))}개 확인)")

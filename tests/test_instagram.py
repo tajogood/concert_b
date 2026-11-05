@@ -28,3 +28,10 @@ def test_carousel_flow(monkeypatch):
     parent = [c for c in calls if c[2].get("media_type") == "CAROUSEL"][0]
     assert parent[2]["children"].count(",") == 1 and parent[2]["caption"] == "cap"
     assert calls[-1][1] == "IG1/media_publish" and calls[-1][2]["creation_id"] == "PARENT"
+
+
+def test_discover_account(monkeypatch):
+    body = {"data": [{"name": "다른 페이지", "id": "p1"},
+                     {"name": "ON STAGE", "id": "p2", "instagram_business_account": {"id": "1784", "username": "onstage"}}]}
+    monkeypatch.setattr(instagram.requests, "get", lambda *a, **k: SimpleNamespace(json=lambda: body))
+    assert instagram.discover_account("tok") == ("1784", "onstage")
