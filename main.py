@@ -141,7 +141,8 @@ def cmd_publish(cfg, args):
         return
     sec = secrets()
     if not (sec["IG_ACCESS_TOKEN"] and sec["IG_USER_ID"]):
-        sys.exit("IG_ACCESS_TOKEN / IG_USER_ID 가 없습니다.")
+        log.warning("[publish] IG_ACCESS_TOKEN / IG_USER_ID 가 아직 없어 업로드를 건너뜁니다 (%d개 게시물 준비됨)", len(todo))
+        return
     icfg = cfg.get("instagram", {})
     ig = Instagram(sec["IG_ACCESS_TOKEN"], sec["IG_USER_ID"], icfg.get("api_host", "graph.facebook.com"),
                    icfg.get("api_version", "v26.0"))
