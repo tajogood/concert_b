@@ -16,6 +16,10 @@ on:
         description: "인스타 업로드 생략 (테스트)"
         type: boolean
         default: true
+      max_posts:
+        description: "이번에 올릴 최대 게시물 수 (0: 전부)"
+        type: string
+        default: "0"
       force:
         description: "이미 게시한 게시물도 다시 게시"
         type: boolean
@@ -156,6 +160,7 @@ jobs:
           ARGS="--slot ${{ needs.collect-build.outputs.slot }}"
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
+          if [ -n "${{ inputs.max_posts }}" ]; then ARGS="$ARGS --max-posts ${{ inputs.max_posts }}"; fi
           python main.py publish $ARGS
 
       - name: Save posted log

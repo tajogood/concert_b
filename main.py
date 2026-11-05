@@ -131,6 +131,8 @@ def cmd_publish(cfg, args):
     man = json.load(open(os.path.join(P["cards"], "manifest.json"), encoding="utf-8"))
     base = cfg["site_url"].rstrip("/") + "/" + P["cards_rel"] + "/"
     todo = [p for p in man["posts"] if args.force or p["key"] not in done]
+    if args.max_posts:
+        todo = todo[: args.max_posts]
     if not todo:
         log.info("[publish] nothing to post for %s", P["run"])
         return
@@ -194,6 +196,7 @@ def main():
     ap.add_argument("--sample", action="store_true", help="샘플 데이터로 수집 단계 대체")
     ap.add_argument("--dry-run", action="store_true", help="인스타 업로드 생략")
     ap.add_argument("--force", action="store_true", help="이미 게시한 게시물도 다시 게시")
+    ap.add_argument("--max-posts", type=int, default=0, help="이번에 올릴 최대 게시물 수 (0: 전부)")
     ap.add_argument("--slot", choices=["auto", "noon", "evening"], default="auto",
                     help="noon: 이번 주, evening: 다음 주·다다음 주 (auto: 15시 전이면 noon)")
     ap.add_argument("--preview", action="store_true", help="모바일 페이지 미리보기 캡처")
