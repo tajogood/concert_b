@@ -17,6 +17,11 @@ on:
         description: "인스타 업로드 생략 (테스트)"
         type: boolean
         default: true
+      only:
+        description: "올릴 게시물 종류"
+        type: choice
+        options: [all, concert, festival]
+        default: all
       max_posts:
         description: "이번에 올릴 최대 게시물 수 (0: 전부)"
         type: string
@@ -175,6 +180,7 @@ jobs:
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
           if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
           if [ -n "${{ inputs.max_posts }}" ]; then ARGS="$ARGS --max-posts ${{ inputs.max_posts }}"; fi
+          if [ -n "${{ inputs.only }}" ]; then ARGS="$ARGS --only ${{ inputs.only }}"; fi
           python main.py publish $ARGS
 
       - name: Save posted log
