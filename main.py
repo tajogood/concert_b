@@ -84,41 +84,44 @@ def cmd_collect(cfg, args):
 
 
 def cmd_build(cfg, args):
-    slot = resolve_slot(args)
-    P = paths(cfg, slot)
-    events = store.publishable(store.load(P["events"]), float(cfg.get("min_confidence_site", 0.5)))
-    idx = render.build_site(events, cfg, P["site"])
+    """사이트 + 게시물 이미지. --slot all 이면 점심·저녁 게시물을 한 번에 만들어 둔다 (아침 수집 직후)."""
+    slots = ["noon", "evening"] if args.slot == "all" else [resolve_slot(args)]
+    P0 = paths(cfg, slots[0])
+    events = store.publishable(store.load(P0["events"]), float(cfg.get("min_confidence_site", 0.5)))
+    idx = render.build_site(events, cfg, P0["site"])
     log.info("[build] site → %s (%d events)", idx, len(events))
 
-    posts = render.plan_posts(events, cfg, slot)
-    manifest = {"run": P["run"], "slot": slot, "posts": []}
-    for post in posts:
-        htmls = render.build_post_slides(post, cfg, os.path.join(P["work"], post["key"]))
-        jpgs = capture.capture_slides(htmls, os.path.join(P["cards"], post["key"]))
-        manifest["posts"].append({
-            "key": post["key"], "title": f"{post['region_full']} {post['week_label']}",
-            "images": [f"{post['key']}/{os.path.basename(j)}" for j in jpgs],
-            "caption": render.build_post_caption(post, cfg),
-        })
-        log.info("[build] post %s: %d slides, %d events", post["key"], len(jpgs), post["count"])
-    # 축제 게시물: 축제 → 근처 관광지. 이미 올린 축제는 다시 고르지 않는다
-    posted = json.load(open(P["posted"], encoding="utf-8")) if os.path.exists(P["posted"]) else {}
+    posted = json.load(open(P0["posted"], encoding="utf-8")) if os.path.exists(P0["posted"]) else {}
     posted_keys = {k for run in posted.values() if isinstance(run, dict) for k in run}
-    for post in render.plan_festival_posts(events, cfg, posted_keys, os.environ.get("TOUR_API_KEY", "")):
-        htmls = render.build_festival_slides(post, cfg, os.path.join(P["work"], post["key"]))
-        jpgs = capture.capture_slides(htmls, os.path.join(P["cards"], post["key"]))
-        manifest["posts"].append({
-            "key": post["key"], "title": post["event"].title,
-            "images": [f"{post['key']}/{os.path.basename(j)}" for j in jpgs],
-            "caption": render.build_festival_caption(post, cfg),
-        })
-        log.info("[build] festival %s: %d slides, %d spots", post["event"].title, len(jpgs), len(post["spots"]))
-    os.makedirs(P["cards"], exist_ok=True)
-    with open(os.path.join(P["cards"], "manifest.json"), "w", encoding="utf-8") as f:
-        json.dump(manifest, f, ensure_ascii=False, indent=1)
+    for slot in slots:
+        P = paths(cfg, slot)
+        manifest = {"run": P["run"], "slot": slot, "posts": []}
+        for post in render.plan_posts(events, cfg, slot):
+            htmls = render.build_post_slides(post, cfg, os.path.join(P["work"], post["key"]))
+            jpgs = capture.capture_slides(htmls, os.path.join(P["cards"], post["key"]))
+            manifest["posts"].append({
+                "key": post["key"], "title": f"{post['region_full']} {post['week_label']}",
+                "images": [f"{post['key']}/{os.path.basename(j)}" for j in jpgs],
+                "caption": render.build_post_caption(post, cfg),
+            })
+            log.info("[build] %s post %s: %d slides, %d events", slot, post["key"], len(jpgs), post["count"])
+        # 축제 게시물: 이미 올렸거나 앞 회차에 배정한 축제는 고르지 않는다
+        for post in render.plan_festival_posts(events, cfg, posted_keys, os.environ.get("TOUR_API_KEY", "")):
+            posted_keys.add(post["key"])
+            htmls = render.build_festival_slides(post, cfg, os.path.join(P["work"], post["key"]))
+            jpgs = capture.capture_slides(htmls, os.path.join(P["cards"], post["key"]))
+            manifest["posts"].append({
+                "key": post["key"], "title": post["event"].title,
+                "images": [f"{post['key']}/{os.path.basename(j)}" for j in jpgs],
+                "caption": render.build_festival_caption(post, cfg),
+            })
+            log.info("[build] %s festival %s: %d slides, %d spots", slot, post["event"].title, len(jpgs), len(post["spots"]))
+        os.makedirs(P["cards"], exist_ok=True)
+        with open(os.path.join(P["cards"], "manifest.json"), "w", encoding="utf-8") as f:
+            json.dump(manifest, f, ensure_ascii=False, indent=1)
+        log.info("[build] slot=%s posts=%d", slot, len(manifest["posts"]))
     if args.preview:
-        capture.capture_page(idx, os.path.join(P["work"], "mobile-preview.jpg"))
-    log.info("[build] slot=%s posts=%d", slot, len(manifest["posts"]))
+        capture.capture_page(idx, os.path.join(P0["work"], "mobile-preview.jpg"))
 
 
 def cmd_publish(cfg, args):
@@ -128,7 +131,16 @@ def cmd_publish(cfg, args):
     P = paths(cfg, slot)
     posted = json.load(open(P["posted"], encoding="utf-8")) if os.path.exists(P["posted"]) else {}
     done = posted.setdefault(P["run"], {})
-    man = json.load(open(os.path.join(P["cards"], "manifest.json"), encoding="utf-8"))
+    mpath = os.path.join(P["cards"], "manifest.json")
+    if os.path.exists(mpath):
+        man = json.load(open(mpath, encoding="utf-8"))
+    else:  # 아침에 만들어 배포해 둔 것을 사이트에서 받는다
+        import requests
+        murl = cfg["site_url"].rstrip("/") + "/" + P["cards_rel"] + "/manifest.json"
+        r = requests.get(murl, timeout=30)
+        if r.status_code != 200:
+            sys.exit(f"오늘 {slot} 게시물이 준비돼 있지 않습니다 ({murl} → {r.status_code}). 아침 수집 실행을 확인하세요.")
+        man = r.json()
     base = cfg["site_url"].rstrip("/") + "/" + P["cards_rel"] + "/"
     todo = [p for p in man["posts"] if args.force or p["key"] not in done]
     if args.only == "festival":
@@ -202,7 +214,7 @@ def main():
     ap.add_argument("--force", action="store_true", help="이미 게시한 게시물도 다시 게시")
     ap.add_argument("--only", choices=["all", "concert", "festival"], default="all", help="올릴 게시물 종류")
     ap.add_argument("--max-posts", type=int, default=0, help="이번에 올릴 최대 게시물 수 (0: 전부)")
-    ap.add_argument("--slot", choices=["auto", "noon", "evening"], default="auto",
+    ap.add_argument("--slot", choices=["auto", "noon", "evening", "all"], default="auto",
                     help="noon: 이번 주, evening: 다음 주·다다음 주 (auto: 15시 전이면 noon)")
     ap.add_argument("--preview", action="store_true", help="모바일 페이지 미리보기 캡처")
     ap.add_argument("-v", "--verbose", action="store_true")

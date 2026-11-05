@@ -1,0 +1,92 @@
+name: collect
+
+# 매일 아침 한 번: 수집 → 데이터 저장 → 사이트와 점심·저녁 게시물 이미지를 미리 만들어 배포
+on:
+  schedule:
+    - cron: "30 0 * * *"   # 09:30 KST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: concert-bot
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Seoul
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  collect-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: |
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Pages URL
+        id: url
+        run: |
+          URL="${{ vars.SITE_URL }}"
+          if [ -z "$URL" ]; then
+            OWNER="${GITHUB_REPOSITORY_OWNER,,}"; REPO="${GITHUB_REPOSITORY#*/}"
+            URL="https://${OWNER}.github.io/${REPO}"
+          fi
+          echo "site_url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Collect
+        env:
+          KOPIS_API_KEY: ${{ secrets.KOPIS_API_KEY }}
+          TOUR_API_KEY: ${{ secrets.TOUR_API_KEY }}
+          SEOUL_API_KEY: ${{ secrets.SEOUL_API_KEY }}
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          KAKAO_REST_KEY: ${{ secrets.KAKAO_REST_KEY }}
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          X_STORAGE_STATE_B64: ${{ secrets.X_STORAGE_STATE_B64 }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python main.py collect
+
+      - name: Build site + today's posts (noon, evening)
+        env:
+          SITE_URL: ${{ steps.url.outputs.site_url }}
+          TOUR_API_KEY: ${{ secrets.TOUR_API_KEY }}
+        run: python main.py build --slot all
+
+      - name: Save data
+        continue-on-error: true
+        run: |
+          git config user.name "concert-bot"
+          git config user.email "concert-bot@users.noreply.github.com"
+          git add data/
+          git diff --cached --quiet || git commit -m "data: $(date +%F)"
+          for i in 1 2 3; do git push && break || (sleep 15; git pull --rebase -q); done
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: collect-build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

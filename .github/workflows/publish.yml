@@ -1,0 +1,96 @@
+name: publish
+
+# 아침에 만들어 둔 게시물을 정해진 시각에 올리기만 한다 (수집·이미지 생성 없음, 1분 이내)
+on:
+  schedule:
+    - cron: "0 3 * * *"    # 12:00 KST 점심: 이번 주
+    - cron: "0 9 * * *"    # 18:00 KST 저녁: 다음 주·다다음 주
+  workflow_dispatch:
+    inputs:
+      slot:
+        description: "게시 회차 (auto: 지금 시각 기준)"
+        type: choice
+        options: [auto, noon, evening]
+        default: auto
+      dry_run:
+        description: "인스타 업로드 생략 (테스트)"
+        type: boolean
+        default: true
+      only:
+        description: "올릴 게시물 종류"
+        type: choice
+        options: [all, concert, festival]
+        default: all
+      max_posts:
+        description: "이번에 올릴 최대 게시물 수 (0: 전부)"
+        type: string
+        default: "0"
+      force:
+        description: "이미 게시한 게시물도 다시 게시"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: concert-bot
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Seoul
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Slot
+        id: slot
+        run: |
+          # 예약 실행이 크게 늦어져 시간대를 벗어나면 게시하지 않는다 (새벽 게시 방지)
+          H=$((10#$(date +%H)))
+          SLOT="${{ inputs.slot }}"
+          if [ -z "$SLOT" ] || [ "$SLOT" = "auto" ]; then
+            if [ $H -ge 11 ] && [ $H -lt 15 ]; then SLOT=noon
+            elif [ $H -ge 17 ] && [ $H -lt 21 ]; then SLOT=evening
+            elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              if [ $H -lt 15 ]; then SLOT=noon; else SLOT=evening; fi
+            else SLOT=skip; fi
+          fi
+          echo "slot=$SLOT" >> "$GITHUB_OUTPUT"
+          echo "slot: $SLOT (KST $(date +%H:%M), event ${{ github.event_name }})"
+
+      - name: Publish to Instagram
+        if: steps.slot.outputs.slot != 'skip'
+        env:
+          SITE_URL: ${{ vars.SITE_URL || format('https://{0}.github.io/{1}', github.repository_owner, github.event.repository.name) }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+        run: |
+          ARGS="--slot ${{ steps.slot.outputs.slot }}"
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.dry_run }}" = "true" ]; then ARGS="$ARGS --dry-run"; fi
+          if [ "${{ inputs.force }}" = "true" ]; then ARGS="$ARGS --force"; fi
+          if [ -n "${{ inputs.max_posts }}" ]; then ARGS="$ARGS --max-posts ${{ inputs.max_posts }}"; fi
+          if [ -n "${{ inputs.only }}" ]; then ARGS="$ARGS --only ${{ inputs.only }}"; fi
+          python main.py publish $ARGS
+
+      - name: Save posted log
+        if: always() && steps.slot.outputs.slot != 'skip'
+        run: |
+          git config user.name "concert-bot"
+          git config user.email "concert-bot@users.noreply.github.com"
+          git add data/posted.json 2>/dev/null || true
+          git diff --cached --quiet && exit 0
+          git commit -m "posted: $(date +%F)"
+          for i in 1 2 3; do git pull --rebase -q && git push && break || sleep 15; done
