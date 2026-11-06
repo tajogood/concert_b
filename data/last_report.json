@@ -1,5 +1,5 @@
 {
- "kopis": "ok events=1942 posts=0",
+ "kopis": "ok events=1891 posts=0",
  "tour": "ok events=47 posts=0",
  "seoul": "skipped: missing secrets: SEOUL_API_KEY",
  "datagokr": "disabled",
@@ -7,10 +7,10 @@
  "daum": "skipped: missing secrets: KAKAO_REST_KEY",
  "x_api": "disabled",
  "x_scrape": "disabled",
- "instagram": "error: me/accounts: API access blocked.",
+ "instagram": "ok events=0 posts=0",
  "web_board": "disabled",
  "extract": "posts=0 events=0",
- "total": 1901,
- "new": 93,
- "at": "2026-11-06T16:14:20+09:00"
+ "total": 1854,
+ "new": 8,
+ "at": "2026-11-07T01:29:12+09:00"
 }
