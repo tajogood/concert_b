@@ -84,9 +84,10 @@ def cmd_collect(cfg, args):
 
 
 def cmd_build(cfg, args):
-    """사이트 + 게시물 이미지. --slot all 이면 점심·저녁 게시물을 한 번에 만들어 둔다 (아침 수집 직후)."""
-    slots = ["noon", "evening"] if args.slot == "all" else [resolve_slot(args)]
-    P0 = paths(cfg, slots[0])
+    """사이트 + 게시물 이미지. 저장된 data/events.json 만 읽는다 (수집과 무관).
+    --slot none: 사이트만, all: 점심·저녁 둘 다, noon/evening/auto: 해당 회차만."""
+    slots = {"none": [], "all": ["noon", "evening"]}.get(args.slot, [resolve_slot(args)])
+    P0 = paths(cfg, (slots or ["noon"])[0])
     events = store.publishable(store.load(P0["events"]), float(cfg.get("min_confidence_site", 0.5)))
     idx = render.build_site(events, cfg, P0["site"])
     log.info("[build] site → %s (%d events)", idx, len(events))
@@ -151,6 +152,8 @@ def cmd_publish(cfg, args):
         todo = todo[: args.max_posts]
     if not todo:
         log.info("[publish] nothing to post for %s", P["run"])
+        if not args.dry_run and man["posts"]:
+            mark_done(P, posted)
         return
     sec = secrets()
     icfg = cfg.get("instagram", {})
@@ -191,6 +194,20 @@ def cmd_publish(cfg, args):
         log.info("[publish] %s done %s", p["key"], done[p["key"]])
     if failed:
         sys.exit(f"{failed} post(s) failed")
+    mark_done(P, posted)
+
+
+def mark_done(P, posted):
+    """회차의 게시물을 전부 올렸다는 표시. 같은 회차 재시도 실행이 빌드 전에 바로 끝나게 한다."""
+    posted.setdefault(P["run"], {})["_done"] = now_kst().isoformat(timespec="seconds")
+    json.dump(posted, open(P["posted"], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+
+
+def cmd_status(cfg, args):
+    """회차 완료 여부만 출력 (워크플로에서 빌드 전에 확인용): done / todo"""
+    P = paths(cfg, resolve_slot(args))
+    posted = json.load(open(P["posted"], encoding="utf-8")) if os.path.exists(P["posted"]) else {}
+    print("done" if "_done" in posted.get(P["run"], {}) else "todo")
 
 
 def cmd_x_login(cfg, args):
@@ -208,13 +225,13 @@ def cmd_x_login(cfg, args):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("command", choices=["collect", "build", "publish", "all", "x-login"])
+    ap.add_argument("command", choices=["collect", "build", "publish", "all", "status", "x-login"])
     ap.add_argument("--sample", action="store_true", help="샘플 데이터로 수집 단계 대체")
     ap.add_argument("--dry-run", action="store_true", help="인스타 업로드 생략")
     ap.add_argument("--force", action="store_true", help="이미 게시한 게시물도 다시 게시")
     ap.add_argument("--only", choices=["all", "concert", "festival"], default="all", help="올릴 게시물 종류")
     ap.add_argument("--max-posts", type=int, default=0, help="이번에 올릴 최대 게시물 수 (0: 전부)")
-    ap.add_argument("--slot", choices=["auto", "noon", "evening", "all"], default="auto",
+    ap.add_argument("--slot", choices=["auto", "noon", "evening", "all", "none"], default="auto",
                     help="noon: 이번 주, evening: 다음 주·다다음 주 (auto: 15시 전이면 noon)")
     ap.add_argument("--preview", action="store_true", help="모바일 페이지 미리보기 캡처")
     ap.add_argument("-v", "--verbose", action="store_true")
@@ -224,6 +241,8 @@ def main():
     cfg = load_config()
     if args.command == "x-login":
         return cmd_x_login(cfg, args)
+    if args.command == "status":
+        return cmd_status(cfg, args)
     if args.command in ("collect", "all"):
         cmd_collect(cfg, args)
     if args.command in ("build", "all"):

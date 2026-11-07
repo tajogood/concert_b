@@ -1,6 +1,6 @@
 name: collect
 
-# 매일 아침 한 번: 수집 → 데이터 저장 → 사이트와 점심·저녁 게시물 이미지를 미리 만들어 배포
+# 매일 아침 한 번: 수집 → data/ 저장 → 사이트 배포. 인스타 게시와는 완전히 별개 (publish.yml 참고)
 on:
   schedule:
     - cron: "30 0 * * *"   # 09:30 KST
@@ -62,11 +62,10 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: python main.py collect
 
-      - name: Build site + today's posts (noon, evening)
+      - name: Build site
         env:
           SITE_URL: ${{ steps.url.outputs.site_url }}
-          TOUR_API_KEY: ${{ secrets.TOUR_API_KEY }}
-        run: python main.py build --slot all
+        run: python main.py build --slot none
 
       - name: Save data
         continue-on-error: true
