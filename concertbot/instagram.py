@@ -11,6 +11,10 @@ class InstagramError(RuntimeError):
     pass
 
 
+class PublishUncertain(InstagramError):
+    """media_publish 가 오류를 돌려줬지만 실제로 게시됐는지 확인하지 못함 (재시도하면 중복 게시 위험)."""
+
+
 class Instagram:
     def __init__(self, token: str, ig_id: str, host: str = "graph.facebook.com", version: str = "v26.0"):
         self.token, self.ig_id = token, ig_id
@@ -57,9 +61,36 @@ class Instagram:
         parent = self._call("POST", f"{self.ig_id}/media", media_type="CAROUSEL",
                             children=",".join(children), caption=caption)["id"]
         self.wait_ready(parent)
-        media_id = self._call("POST", f"{self.ig_id}/media_publish", creation_id=parent)["id"]
+        try:
+            media_id = self._call("POST", f"{self.ig_id}/media_publish", creation_id=parent)["id"]
+        except InstagramError as e:
+            # 'Application request limit reached' 등: 오류가 나도 실제로는 게시된 경우가 있다 → 최근 게시물에서 확인
+            time.sleep(20)
+            found = self.find_recent(caption)
+            if found:
+                log.warning("[ig] media_publish 오류였지만 실제로 게시됨: %s (%s)", found, e)
+                return found
+            raise PublishUncertain(str(e)) from e
         log.info("[ig] published media %s", media_id)
         return media_id
+
+    def find_recent(self, caption: str, minutes: int = 20) -> str | None:
+        """최근 게시물 중 캡션 앞부분이 같고 방금 올라간 것이 있으면 그 id."""
+        from datetime import datetime, timedelta, timezone
+        try:
+            items = self._call("GET", f"{self.ig_id}/media", fields="id,caption,timestamp", limit=5).get("data", [])
+        except InstagramError:
+            return None
+        since = datetime.now(timezone.utc) - timedelta(minutes=minutes)
+        head = (caption or "").strip()[:60]
+        for it in items:
+            try:
+                ts = datetime.strptime(it.get("timestamp", ""), "%Y-%m-%dT%H:%M:%S%z")
+            except ValueError:
+                continue
+            if ts >= since and (it.get("caption") or "").strip()[:60] == head:
+                return it["id"]
+        return None
 
     def permalink(self, media_id: str) -> str:
         try:

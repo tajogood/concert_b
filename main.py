@@ -97,7 +97,8 @@ def cmd_build(cfg, args):
     for slot in slots:
         P = paths(cfg, slot)
         manifest = {"run": P["run"], "slot": slot, "posts": []}
-        for post in render.plan_posts(events, cfg, slot):
+        for post in render.plan_posts(events, cfg, slot, posted_keys):
+            posted_keys.add(post["key"])
             htmls = render.build_post_slides(post, cfg, os.path.join(P["work"], post["key"]))
             jpgs = capture.capture_slides(htmls, os.path.join(P["cards"], post["key"]))
             manifest["posts"].append({
@@ -143,7 +144,8 @@ def cmd_publish(cfg, args):
             sys.exit(f"오늘 {slot} 게시물이 준비돼 있지 않습니다 ({murl} → {r.status_code}). 아침 수집 실행을 확인하세요.")
         man = r.json()
     base = cfg["site_url"].rstrip("/") + "/" + P["cards_rel"] + "/"
-    todo = [p for p in man["posts"] if args.force or p["key"] not in done]
+    ever = {k for run in posted.values() if isinstance(run, dict) for k in run}  # 어느 회차에서든 올린 적 있으면 다시 안 올림
+    todo = [p for p in man["posts"] if args.force or p["key"] not in ever]
     if args.only == "festival":
         todo = [p for p in todo if p["key"].startswith("fest-")]
     elif args.only == "concert":
@@ -178,15 +180,25 @@ def cmd_publish(cfg, args):
     ig = Instagram(sec["IG_ACCESS_TOKEN"], sec["IG_USER_ID"], host, ver)
     log.info("[publish] quota: %s", ig.publishing_quota())
     os.makedirs(os.path.dirname(P["posted"]), exist_ok=True)
+    from concertbot.instagram import PublishUncertain
     failed = 0
     for p in todo:
         urls = [base + i for i in p["images"]]
         try:
             wait_public(urls)
             media_id = ig.publish_carousel(urls, p["caption"])
+        except PublishUncertain as e:
+            # 게시 요청 단계에서 오류가 났지만 실제로는 올라갔을 수 있음 → 중복 방지를 위해 올린 것으로 기록하고 이번 실행 중단
+            done[p["key"]] = {"media_id": None, "uncertain": str(e)[:200], "at": now_kst().isoformat(timespec="seconds"),
+                              "images": len(urls)}
+            json.dump(posted, open(P["posted"], "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+            log.error("[publish] %s 게시 여부 불확실 (다시 올리지 않음, 인스타에서 확인 필요): %s", p["key"], e)
+            sys.exit(1)
         except Exception as e:  # noqa: BLE001
             failed += 1
             log.error("[publish] %s failed: %s", p["key"], e)
+            if "limit" in str(e).lower():
+                break  # 호출 한도에 걸리면 이어서 시도하지 않는다
             continue
         done[p["key"]] = {"media_id": media_id, "permalink": ig.permalink(media_id),
                           "at": now_kst().isoformat(timespec="seconds"), "images": len(urls)}

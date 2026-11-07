@@ -70,6 +70,17 @@
    "permalink": "https://www.instagram.com/p/DfcAs8AF-Qd/",
    "at": "2026-11-07T19:53:00+09:00",
    "images": 9
-  }
+  },
+  "2026-11-w3-gyeonggi": {
+   "media_id": null,
+   "uncertain": "media_publish 오류(Application request limit reached)였지만 실제 게시됨 — 수동 기록",
+   "at": "2026-11-07T20:59:06+09:00"
+  },
+  "fest-2563387": {
+   "media_id": null,
+   "uncertain": "media_publish 오류(Application request limit reached)였지만 실제 게시됨 — 수동 기록",
+   "at": "2026-11-07T20:59:06+09:00"
+  },
+  "_done": "2026-11-07T23:10:00+09:00"
  }
 }

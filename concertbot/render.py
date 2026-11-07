@@ -129,8 +129,26 @@ def _view(e: Event, day: str) -> dict:
     }
 
 
-def plan_posts(events: list[Event], cfg: dict, slot: str) -> list[dict]:
+def concert_queue(cfg: dict, today: date | None = None) -> list[tuple[int, dict, str]]:
+    """(주, 지역) 게시 순서: 주가 빠른 것부터, 같은 주에서는 config 지역 순서. 지난 4주부터 앞으로 weeks_ahead 주까지."""
     icfg = cfg.get("instagram", {})
+    today = today or today_kst()
+    regions = icfg.get("regions", ["서울", "경기"])
+    ahead = int(icfg.get("weeks_ahead", 3))
+    return [(off, week_info(today + timedelta(days=7 * off)), r) for off in range(-4, ahead + 1) for r in regions]
+
+
+def concert_key(w: dict, region: str) -> str:
+    return f"{w['key']}-{REGION_SLUG.get(region, region)}"
+
+
+def plan_posts(events: list[Event], cfg: dict, slot: str = "", posted_keys: set | frozenset = frozenset(),
+               limit: int | None = None) -> list[dict]:
+    """한 회차에 공연 게시물 1개 (지역 1곳 × 1개 주).
+    이미 올린 (주, 지역) 중 가장 마지막 것 다음 차례부터 고르므로 순서가 앞으로만 진행되고 같은 주·지역은 다시 올라가지 않는다.
+    이번 주는 일요일이면 건너뛴다."""
+    icfg = cfg.get("instagram", {})
+    limit = int(icfg.get("concert_posts_per_slot", 1)) if limit is None else limit
     today = today_kst()
     regions = icfg.get("regions", ["서울", "경기"])
     per_day = int(icfg.get("per_slide_week", 3))
@@ -143,35 +161,39 @@ def plan_posts(events: list[Event], cfg: dict, slot: str) -> list[dict]:
         return (genre_rank.get(e.genre, 9), -bool(e.ticket_open), -bool(e.artists), -bool(e.ticket_links), e.title)
 
     posts = []
-    for offset in SLOT_WEEKS[slot]:
-        w = week_info(today + timedelta(days=7 * offset))
+    queue = concert_queue(cfg, today)
+    last = max((i for i, (_, w, r) in enumerate(queue) if concert_key(w, r) in posted_keys), default=-1)
+    for offset, w, region in queue[last + 1:]:
+        if len(posts) >= limit:
+            break
+        if offset < 0 or (offset == 0 and today.weekday() == 6) or region not in regions:
+            continue
         start = max(w["monday"], today).isoformat()
         end = w["sunday"].isoformat()
-        for region in regions:
-            evs = [e for e in short if e.region == region and e.start_date <= end and (e.end_date or e.start_date) >= start]
-            if not evs:
-                continue
-            by_day = {}
-            for e in evs:
-                by_day.setdefault(max(e.start_date, start), []).append(e)
-            slides = []
-            for day in sorted(by_day):
-                if len(slides) >= max_slides - 2:
-                    break
-                ds = sorted(by_day[day], key=score)
-                chunk = [_view(e, day) for e in ds[:per_day]]
-                more = len(ds) - len(chunk)
-                d = date.fromisoformat(day)
-                slides.append({"kind": "list", "heading": f"{d.month}.{d.day} {WEEKDAYS[d.weekday()]}요일",
-                               "sub": f"{REGION_FULL.get(region, region)} 공연 {len(ds)}개" + (f" 중 {len(chunk)}개" if more > 0 else ""),
-                               "events": chunk})
-            venues = {e.venue for e in evs if e.venue}
-            posts.append({
-                "key": f"{w['key']}-{REGION_SLUG.get(region, region)}", "region": region, "region_full": REGION_FULL.get(region, region),
-                "week_label": w["label_long"], "start": start, "end": end,
-                "count": len(evs), "venues": len(venues), "events": sorted(evs, key=lambda e: (max(e.start_date, start), score(e))),
-                "slides": [{"kind": "cover"}] + slides + [{"kind": "outro"}],
-            })
+        evs = [e for e in short if e.region == region and e.start_date <= end and (e.end_date or e.start_date) >= start]
+        if not evs:
+            continue
+        by_day = {}
+        for e in evs:
+            by_day.setdefault(max(e.start_date, start), []).append(e)
+        slides = []
+        for day in sorted(by_day):
+            if len(slides) >= max_slides - 2:
+                break
+            ds = sorted(by_day[day], key=score)
+            chunk = [_view(e, day) for e in ds[:per_day]]
+            more = len(ds) - len(chunk)
+            d = date.fromisoformat(day)
+            slides.append({"kind": "list", "heading": f"{d.month}.{d.day} {WEEKDAYS[d.weekday()]}요일",
+                           "sub": f"{REGION_FULL.get(region, region)} 공연 {len(ds)}개" + (f" 중 {len(chunk)}개" if more > 0 else ""),
+                           "events": chunk})
+        venues = {e.venue for e in evs if e.venue}
+        posts.append({
+            "key": concert_key(w, region), "region": region, "region_full": REGION_FULL.get(region, region),
+            "week_label": w["label_long"], "start": start, "end": end,
+            "count": len(evs), "venues": len(venues), "events": sorted(evs, key=lambda e: (max(e.start_date, start), score(e))),
+            "slides": [{"kind": "cover"}] + slides + [{"kind": "outro"}],
+        })
     return posts
 
 

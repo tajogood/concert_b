@@ -70,17 +70,25 @@ def test_guess_genre():
     assert guess_genre("단독 콘서트") == ""
 
 
-def test_plan_posts_slots():
+def test_plan_posts_one_per_run_forward_only():
     from concertbot import render
-    evs = [Event(f"서울 공연 {i}", d(i), venue="롤링홀", region="서울", sources=[Source("kopis", f"k{i}")]) for i in range(0, 21)]
-    cfg = {"brand": "x", "instagram": {"regions": ["서울", "부산"]}}
-    noon = render.plan_posts(evs, cfg, "noon")
-    eve = render.plan_posts(evs, cfg, "evening")
-    assert [p["region"] for p in noon] == ["서울"]  # 부산은 공연이 없어 건너뜀
-    assert len(eve) == 2 and eve[0]["key"] != eve[1]["key"]
-    assert noon[0]["start"] == today_kst().isoformat()
-    assert noon[0]["slides"][0]["kind"] == "cover" and noon[0]["slides"][-1]["kind"] == "outro"
-    assert "seoul" in noon[0]["key"]
+    from concertbot.util import week_info
+    evs = [Event(f"공연 {i}", d(i), venue="롤링홀", region=r, sources=[Source("kopis", f"k{i}{r}")])
+           for i in range(0, 28) for r in ("서울", "경기")]
+    cfg = {"brand": "x", "instagram": {"regions": ["서울", "경기"], "weeks_ahead": 3}}
+    posted, seq = set(), []
+    for _ in range(4):
+        ps = render.plan_posts(evs, cfg, "noon", posted)
+        assert len(ps) == 1  # 회차당 1개
+        posted.add(ps[0]["key"]); seq.append(ps[0]["key"])
+    assert len(set(seq)) == 4
+    order = [render.concert_key(w, r) for _, w, r in render.concert_queue(cfg)]
+    assert [order.index(k) for k in seq] == sorted(order.index(k) for k in seq)  # 앞으로만 진행
+    # 다음 주를 올렸으면 이번 주 남은 지역으로 되돌아가지 않는다
+    nxt = render.concert_key(week_info(today_kst() + timedelta(days=7)), "서울")
+    ps = render.plan_posts(evs, cfg, "noon", {nxt})
+    assert order.index(ps[0]["key"]) > order.index(nxt)
+    assert ps[0]["slides"][0]["kind"] == "cover" and ps[0]["slides"][-1]["kind"] == "outro"
 
 
 def test_split_pages():

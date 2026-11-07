@@ -129,7 +129,9 @@ instagram:
     max_length_days: 45            # 이보다 긴 연중 행사는 제외
     genres: [축제, 버스킹]
     nearby: {count: 4, radius_m: 15000, content_type: 12}   # 12 = 관광지
-  regions: [서울, 경기]             # 게시물을 만들 지역. 회차마다 (지역 수 × 주 수)개 게시
+  regions: [서울, 경기]             # 공연 게시물 지역. 순서대로 돌아가며 올린다
+  concert_posts_per_slot: 1        # 회차마다 공연 게시물 수: 지역 1곳 × 1개 주
+  weeks_ahead: 3                   # 이번 주부터 몇 주 앞까지 올릴지. (주, 지역)마다 한 번만 올리고 순서는 앞으로만 진행
   per_slide_week: 3
   show_posters: true
   genre_priority: [대중음악, 축제, 버스킹, 서커스·마술, 클래식, 국악]   # 이번 주 슬라이드에서 먼저 보여줄 장르 순서
