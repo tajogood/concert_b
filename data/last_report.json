@@ -1,6 +1,6 @@
 {
- "kopis": "ok events=1827 posts=0",
- "tour": "ok events=28 posts=0",
+ "kopis": "error: KOPIS 목록을 하나도 받지 못함",
+ "tour": "ok events=29 posts=0",
  "seoul": "skipped: missing secrets: SEOUL_API_KEY",
  "datagokr": "disabled",
  "naver": "skipped: missing secrets: NAVER_CLIENT_ID, NAVER_CLIENT_SECRET",
@@ -10,7 +10,7 @@
  "instagram": "ok events=0 posts=0",
  "web_board": "disabled",
  "extract": "posts=0 events=0",
- "total": 1767,
- "new": 98,
- "at": "2026-11-26T17:45:29+09:00"
+ "total": 1723,
+ "new": 1,
+ "at": "2026-11-27T18:04:01+09:00"
 }
